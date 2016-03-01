@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+
+    
+  <url>
+    <loc>http://iosqqmail.github.io/2016/01/04/2016-1-4_Swizzle_Foundation%E5%AE%B9%E5%99%A8%E7%9A%84%E6%AD%A3%E7%A1%AE%E5%A7%BF%E5%8A%BF/</loc>
+    <lastmod>2016-03-01T10:32:56.000Z</lastmod>
+    <data>
+        <display>
+        <title>Swizzle Foundation容器的正确姿势</title>
+        <pubTime>2016-01-03T16:00:00.000Z</pubTime>
+        
+        <tag>objective-c</tag>
+         
+        <tag>nil</tag>
+         
+        <tag>crash</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+    
+  <url>
+    <loc>http://iosqqmail.github.io/2016/03/01/%E7%BA%BF%E7%A8%8B%E4%B8%8E%E6%B6%88%E6%81%AF%E5%BE%AA%E7%8E%AF-MessageLoop/</loc>
+    <lastmod>2016-03-01T09:34:05.000Z</lastmod>
+    <data>
+        <display>
+        <title>线程与消息循环(MessageLoop)</title>
+        <pubTime>2016-03-01T06:30:59.000Z</pubTime>
+        
+         
+           
+        </display>
+    </data>
+    </url>
+
+    
+  <url>
+    <loc>http://iosqqmail.github.io/2016/03/01/%E5%9F%BA%E4%BA%8Elibcurl%E7%9A%84%E5%8D%95%E7%BA%BF%E7%A8%8BI:O%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8HTTP%E6%A1%86%E6%9E%B6/</loc>
+    <lastmod>2016-03-01T06:42:49.000Z</lastmod>
+    <data>
+        <display>
+        <title>基于libcurl的单线程I/O多路复用HTTP框架</title>
+        <pubTime>2016-03-01T06:40:59.000Z</pubTime>
+        
+        <tag>iOS Android C++ CURL HTTP</tag>
+         
+         
+           
+        </display>
+    </data>
+    </url>
+
+</urlset>

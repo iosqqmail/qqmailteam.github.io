@@ -1,0 +1,694 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="iOS Android C++ CURL HTTP," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="1. 前言开发iOS已经有一段时间，在每一个成熟的app开发中，一定少不了要和后台数据进行数据交互，这个时候一个好的网络框架就显得很重要。
+1.1 HTTP和跨平台HTTP请求在app开发中应用广泛。iOS本身就带有很成熟的http api，NSURLRequest，NSURLConnection等，而业界优秀的开源库AFNetworking在系统的api上进行封装，使得HTTP的开发更加便捷。A">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于libcurl的单线程I/O多路复用HTTP框架">
+<meta property="og:url" content="http://iosqqmail.github.io/2016/03/01/基于libcurl的单线程I:O多路复用HTTP框架/index.html">
+<meta property="og:site_name" content="QQ邮箱的技术博客">
+<meta property="og:description" content="1. 前言开发iOS已经有一段时间，在每一个成熟的app开发中，一定少不了要和后台数据进行数据交互，这个时候一个好的网络框架就显得很重要。
+1.1 HTTP和跨平台HTTP请求在app开发中应用广泛。iOS本身就带有很成熟的http api，NSURLRequest，NSURLConnection等，而业界优秀的开源库AFNetworking在系统的api上进行封装，使得HTTP的开发更加便捷。A">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/blockio.png">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/noblockio.png">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/multiplexio.png">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/curlnetworking.png">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/multisocket.png">
+<meta property="og:updated_time" content="2016-03-01T06:42:49.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="基于libcurl的单线程I/O多路复用HTTP框架">
+<meta name="twitter:description" content="1. 前言开发iOS已经有一段时间，在每一个成熟的app开发中，一定少不了要和后台数据进行数据交互，这个时候一个好的网络框架就显得很重要。
+1.1 HTTP和跨平台HTTP请求在app开发中应用广泛。iOS本身就带有很成熟的http api，NSURLRequest，NSURLConnection等，而业界优秀的开源库AFNetworking在系统的api上进行封装，使得HTTP的开发更加便捷。A">
+<meta name="twitter:image" content="http://7xptxv.com1.z0.glb.clouddn.com/blockio.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 基于libcurl的单线程I/O多路复用HTTP框架 | QQ邮箱的技术博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74497486-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">QQ邮箱的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+      
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                基于libcurl的单线程I/O多路复用HTTP框架
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">发表于</span>
+            <time itemprop="dateCreated" datetime="2016-03-01T14:40:59+08:00" content="2016-03-01">
+              2016-03-01
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>开发iOS已经有一段时间，在每一个成熟的app开发中，一定少不了要和后台数据进行数据交互，这个时候一个好的网络框架就显得很重要。</p>
+<h3 id="1-1-HTTP和跨平台"><a href="#1-1-HTTP和跨平台" class="headerlink" title="1.1 HTTP和跨平台"></a>1.1 HTTP和跨平台</h3><p>HTTP请求在app开发中应用广泛。iOS本身就带有很成熟的http api，NSURLRequest，NSURLConnection等，而业界优秀的开源库AFNetworking在系统的api上进行封装，使得HTTP的开发更加便捷。Android得益于java语言，也带有很强大的HttpClient。 但这些都只能在各自平台上运行，在跨平台的应用场景下，就需要有一个套统一的解决方案。在QQ邮箱移动客户端，微日历的开发过程中，就用到了跨平台的http网络实现框架，实现了iOS和Android两个平台共用一套底层网络代码。</p>
+<h3 id="1-2-libcurl"><a href="#1-2-libcurl" class="headerlink" title="1.2 libcurl"></a>1.2 libcurl</h3><p>libcurl是一个跨平台的多协议数据传输开源库，当然也包括http 协议。在QQ邮箱移动客户端，微日历的开发过程中，就基于libcurl进行了二次开发，抽取了一套通用的http client框架。</p>
+<h3 id="1-3-单线程I-O多路复用"><a href="#1-3-单线程I-O多路复用" class="headerlink" title="1.3 单线程I/O多路复用"></a>1.3 单线程I/O多路复用</h3><p>网络I/O模型在后台开发中应该是比较常见的，在后台开发中，为了达到负载与性能的最优，一般要采用select/epoll/kqueue等方式对网络I/O进行复用来提高线程的负载。其实这种思想在移动客户的开发中也同样的适用，AFNetworking框架中的网络实现就是采用了这种I/O模型。网络I/O模型包括 1：阻塞I/O模型 ，2：非阻塞I/O模型 ，3：多路复用I/O模型 ，4：异步I/O模型 。这里就不展开讲解，有兴趣的同学可以查阅《UNIX网络编程》。对于iOS和Android系统而言，异步I/O模型需要依赖系统的特殊支持，所以不同于后台开发，在移动客户端开发中，一般选用第三种模型(多路复用I/O模型)。下面通过几张图说明下 前三种模型的工作原理：</p>
+<p>1：阻塞I/O模型<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/blockio.png" alt="blockio"></p>
+<p>2：非阻塞I/O模型<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/noblockio.png" alt="nonblockio"></p>
+<p>3：多路复用I/O模型<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/multiplexio.png" alt="multiplexio"></p>
+<p>多路复用I/O模型在多个网络请求并发的时候，可以减少线程切换与数据共享加锁的成本，提高app的网络请求速度。现代的多路复用I/O模型一般会对select这里进行优化，比如采用libevent注册事件，让系统内核回调可读写的事件，从而解放select/epoll的线程调用，进一步提高性能。</p>
+<h2 id="2-跨平台HTTP框架的设计"><a href="#2-跨平台HTTP框架的设计" class="headerlink" title="2. 跨平台HTTP框架的设计"></a>2. 跨平台HTTP框架的设计</h2><p>QQ邮箱app 底层的邮件协议请求采用了 libcurl+libevent的多路复用I/O模型，在同一条网络线程里并发处理所有的网络请求，同时利用libevent监听http socket的可读可写状态，实时回调网络数据。下面先看一下qq邮箱移动客户端跨平台http框架的架构：<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/curlnetworking.png" alt="curlnetworking"></p>
+<p>整个框架可分为下面几个部分：</p>
+<ol>
+<li>任务队列connection_operaion_queue</li>
+<li>任务单元connection_operation</li>
+<li>网络请求对象connection</li>
+<li>链接并发重用管理器connection_runner</li>
+</ol>
+<h3 id="2-1-任务队列"><a href="#2-1-任务队列" class="headerlink" title="2.1 任务队列"></a>2.1 任务队列</h3><p>connection_operaion_queue简单地维护了一个优先级队列，可以对并发任务数进行限制。</p>
+<h3 id="2-2-链接任务单元"><a href="#2-2-链接任务单元" class="headerlink" title="2.2 链接任务单元"></a>2.2 链接任务单元</h3><p>connection_operation作为一个任务单元的封装，包含了网络请求对象connection，网络成功失败回调，进度回调，request，response等。connection_operation接收来自网络请求对象connection有delegate，并把状态实时回调给connection_operation_queue。</p>
+<h3 id="2-3-网络请求对象"><a href="#2-3-网络请求对象" class="headerlink" title="2.3 网络请求对象"></a>2.3 网络请求对象</h3><p>这里重点讲一下网络请求对象connection。前面提到的单线程多路复用I/O模型就应用到connection里。connection的http请求是基于libcurl的事件驱动来完成的。libcurl的multi接口需要不停的调用curl_multi_perform或者是curl_multi_socket_action来驱动流程的进行，如下面的图片所示：<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/multisocket.png" alt="multisocket"></p>
+<p>libcurl里面会维护着一个timeout的树，调用者在调用curl_multi_perform或者是curl_multi_socket_action的过程中，libcurl根据socket mode的变化，估算出下一次需要调用curl_multi_perform或者是curl_multi_socket_action的时间。libcurl需要上层轮询去调用接口，是为了等socket的可读可写状态变化，那么上层在轮询的过程中，可以采用select/epoll/libevent等几种方式 进行优化，降低cpu的空转，提高响应速度。在qq邮箱通用协议层的设计中，我们是选取了libevent的方式，向系统内核注册事件来监控socket的状态，最大化地提高效率。</p>
+<h4 id="2-4-并发重用"><a href="#2-4-并发重用" class="headerlink" title="2.4 并发重用"></a>2.4 并发重用</h4><p>connection_runner是一个lazy initialze 的全局静态对象，里面维护着curl里的CURLM对象，所有的curl easy handler最终都会通过这个对象进行网络请求。CURLM对象会对easy handler进行socket cache，dns cache等操作，提高http1.1(1.0的时候http socket复用不了)情况下socket的复用率，从面减少tcp三次握手时间，ssl handshake的时间等。</p>
+<h2 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h2><p>基于libcurl的单身线程I/O多路复用网络请求模型在qq邮箱iOS客户端和Android客户端的通用邮件协议层得到广泛的应用。保证了多账号多协议的客户端网络请求的速度与并发量。</p>
+<p>由于libcurl是纯c实现的，对移动客户端开发人员来讲并不友好，所以现在已经对libcurl进行重新的包装，结合Dispatch-Lite，参照在iOS开发中应用广泛的Object-C网络库的接口设计，把这个模型已经抽取成公共组件 <a href="https://github.com/jasenhuang/CURLNetworking.git" target="_blank" rel="external">CURLNetworking</a>，有兴趣的同学可稳步公共组件进行查看。</p>
+<p>欢迎拍砖～～～</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS-Android-C-CURL-HTTP/" rel="tag">#iOS Android C++ CURL HTTP</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/03/01/线程与消息循环-MessageLoop/" rel="next" title="线程与消息循环(MessageLoop)">
+                <i class="fa fa-chevron-left"></i> 线程与消息循环(MessageLoop)
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="QQ邮箱iOS开发组" />
+          <p class="site-author-name" itemprop="name">QQ邮箱iOS开发组</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">3</span>
+              <span class="site-state-item-name">日志</span>
+            </a>
+          </div>
+          
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">4</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-前言"><span class="nav-number">1.</span> <span class="nav-text">1. 前言</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-1-HTTP和跨平台"><span class="nav-number">1.1.</span> <span class="nav-text">1.1 HTTP和跨平台</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-2-libcurl"><span class="nav-number">1.2.</span> <span class="nav-text">1.2 libcurl</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-3-单线程I-O多路复用"><span class="nav-number">1.3.</span> <span class="nav-text">1.3 单线程I/O多路复用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-跨平台HTTP框架的设计"><span class="nav-number">2.</span> <span class="nav-text">2. 跨平台HTTP框架的设计</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-任务队列"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 任务队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-链接任务单元"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 链接任务单元</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-网络请求对象"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 网络请求对象</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#2-4-并发重用"><span class="nav-number">2.3.1.</span> <span class="nav-text">2.4 并发重用</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-总结"><span class="nav-number">3.</span> <span class="nav-text">3. 总结</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">QQ邮箱iOS开发组</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  
+
+
+  
+
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.scheme !== 'Pisces' && (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always')) {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+  
+  
+
+  
+  
+
+
+</body>
+</html>

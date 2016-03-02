@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="iOS,Android,跨平台,NSRunLoop,Looper,c++," />
 
 
 
@@ -57,16 +57,24 @@
 
 
 
-<meta name="description">
+<meta name="description" content="1. 前言每一个需要与用户进行交互的app都需要至少一个消息循环，来处理用户事件的输入和各种I/O事件。iOS和Andriod都有各自系统的MessageLoop，iOS的叫NSRunLoop，Android的叫Looper。消息循环有利于提交系统的影响速度，在现代操作系统中得到了广泛的应用。
+2. 消息循环消息循环的工作原理大同小异，原理上就是一个while循环+消息队列不断接收任务。具体可以分">
 <meta property="og:type" content="article">
-<meta property="og:title" content="线程与消息循环(MessageLoop)">
+<meta property="og:title" content="线程与消息循环-MessageLoop">
 <meta property="og:url" content="http://iosqqmail.github.io/2016/03/01/线程与消息循环-MessageLoop/index.html">
 <meta property="og:site_name" content="QQ邮箱的技术博客">
-<meta property="og:description">
-<meta property="og:updated_time" content="2016-03-01T09:34:05.000Z">
+<meta property="og:description" content="1. 前言每一个需要与用户进行交互的app都需要至少一个消息循环，来处理用户事件的输入和各种I/O事件。iOS和Andriod都有各自系统的MessageLoop，iOS的叫NSRunLoop，Android的叫Looper。消息循环有利于提交系统的影响速度，在现代操作系统中得到了广泛的应用。
+2. 消息循环消息循环的工作原理大同小异，原理上就是一个while循环+消息队列不断接收任务。具体可以分">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/runloop.png">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/looper.png">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/timeline.png">
+<meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/threadlocal.png">
+<meta property="og:updated_time" content="2016-03-02T04:29:41.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="线程与消息循环(MessageLoop)">
-<meta name="twitter:description">
+<meta name="twitter:title" content="线程与消息循环-MessageLoop">
+<meta name="twitter:description" content="1. 前言每一个需要与用户进行交互的app都需要至少一个消息循环，来处理用户事件的输入和各种I/O事件。iOS和Andriod都有各自系统的MessageLoop，iOS的叫NSRunLoop，Android的叫Looper。消息循环有利于提交系统的影响速度，在现代操作系统中得到了广泛的应用。
+2. 消息循环消息循环的工作原理大同小异，原理上就是一个while循环+消息队列不断接收任务。具体可以分">
+<meta name="twitter:image" content="http://7xptxv.com1.z0.glb.clouddn.com/runloop.png">
 
 
 
@@ -74,7 +82,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     scheme: 'Muse',
-    sidebar: {"position":"left","display":"post"},
+    sidebar: {"position":"left","display":"hide"},
     fancybox: true,
     motion: true,
     duoshuo: {
@@ -84,7 +92,7 @@
   };
 </script>
 
-  <title> 线程与消息循环(MessageLoop) | QQ邮箱的技术博客 </title>
+  <title> 线程与消息循环-MessageLoop | QQ邮箱的技术博客 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -213,7 +221,7 @@
             
             
               
-                线程与消息循环(MessageLoop)
+                线程与消息循环-MessageLoop
               
             
           </h1>
@@ -224,7 +232,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-o"></i>
             </span>
-            <span class="post-meta-item-text">发表于</span>
+            <span class="post-meta-item-text">Jasen Huang 发表于</span>
             <time itemprop="dateCreated" datetime="2016-03-01T14:30:59+08:00" content="2016-03-01">
               2016-03-01
             </time>
@@ -252,7 +260,43 @@
       
 
       
-        
+        <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>每一个需要与用户进行交互的app都需要至少一个消息循环，来处理用户事件的输入和各种I/O事件。iOS和Andriod都有各自系统的MessageLoop，iOS的叫NSRunLoop，Android的叫Looper。消息循环有利于提交系统的影响速度，在现代操作系统中得到了广泛的应用。</p>
+<h2 id="2-消息循环"><a href="#2-消息循环" class="headerlink" title="2. 消息循环"></a>2. 消息循环</h2><p>消息循环的工作原理大同小异，原理上就是一个while循环+消息队列不断接收任务。具体可以分为下面几个部分的内容：</p>
+<ol>
+<li>事件源接收与分发</li>
+<li>延时处理</li>
+<li>线程等待唤醒处理</li>
+</ol>
+<h3 id="2-1-事件源接收与分发"><a href="#2-1-事件源接收与分发" class="headerlink" title="2.1 事件源接收与分发"></a>2.1 事件源接收与分发</h3><p>MessageLoop内部一般会有一个消息队列，等待要执行的任务push进来。下面通过两张图简单说明下：</p>
+<ul>
+<li><p>iOS的NSRunLoop<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/runloop.png" alt="NSRunLoop"></p>
+</li>
+<li><p>Android的Looper<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/looper.png" alt="Looper"></p>
+</li>
+</ul>
+<h3 id="2-2-延时处理"><a href="#2-2-延时处理" class="headerlink" title="2.2 延时处理"></a>2.2 延时处理</h3><p>延时任务在消息处理中很常见，消息循环一般要针对延时的任务进行等待处理。这个时候就需要两个东西：</p>
+<ol>
+<li>延时队列</li>
+<li>时钟计数<a id="more"></a>
+时钟计数需要一个系统固定的时间作为所有任务计时的起点，一般我们会采用系统的启动时间boottime，延时队列用来存储还未到时间执行的任务。消息循环每次loop的时候，会检查当前时钟有没有达到延时队列里任务的时间点，有的话就取出来执行，没有就等待下一次loop。假如有某些任务执行时间比较长，会导致延时队列里的任务已经过了要执行的时间点。为了保证效率，这个时候消息循环会统一对过期的任务进行调用。所以<strong>延时任务只能保证在&gt;=delay的时间点执行</strong>。<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/timeline.png" alt="timeline"></li>
+</ol>
+<h3 id="2-3-线程等待唤醒处理"><a href="#2-3-线程等待唤醒处理" class="headerlink" title="2.3 线程等待唤醒处理"></a>2.3 线程等待唤醒处理</h3><p>消息循环本质是一个等待队列，那么这个时候经典的生产者消费者模型就派上用场了。“生产者消费者”模型可以用信号量，管道等方法来实现。在实际的项目中，一般会采用pthread的pthread_cond_wait,pthread_cond_signal,pthread_cond_broadcast等接口来实现。如果考虑到linux和window平台的跨平台场景，那可以直接用STL的condition_variable。(window对pthread的支持不是很好)。</p>
+<h2 id="3-跨平台的MessageLoop实现"><a href="#3-跨平台的MessageLoop实现" class="headerlink" title="3. 跨平台的MessageLoop实现"></a>3. 跨平台的MessageLoop实现</h2><p>介绍完消息循环的工作原理后，我们来看一下在mailapp协议层的设计中，跨平台的messageloop是怎么实现的。跨平台的MessageLoop最开始是参照google的chromium框架实现的。google的chromium库庞大复杂，跨平台的MessageLoop只是抽取了其它一部分功能进行实现，去掉了平台相关的UI线程消息循环实现。下面通过一张图介绍一下MessageLoop的架构设计：</p>
+<p>按照前面的消息循环原理，我们需要实现以下几个功能：</p>
+<ul>
+<li>线程存储空间</li>
+<li>优先级队列</li>
+<li>计时时钟</li>
+<li>线程等待唤醒</li>
+</ul>
+<h3 id="3-1-线程存储空间"><a href="#3-1-线程存储空间" class="headerlink" title="3.1 线程存储空间"></a>3.1 线程存储空间</h3><p>每条线程对应着一条messageloop，所以需要创建线程特有的存储空间来存放messageloop对象。<br>关于线程特有存储空间可以参照 <a href="https://msdn.microsoft.com/zh-cn/library/windows/desktop/ms686749(v=vs.85" target="_blank" rel="external">Using Thread Local Storage</a>.aspx)。<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/threadlocal.png" alt="threadlocal"></p>
+<p>实现线程特定存储有两种方式，c++11中的<code>thread_local</code>，pthread的<code>pthread_key_t</code>。c++11的thread_local关键字在mac系统还没支持，所以我们选取了pthread的相关接口来实现。这样我们就可以直接通过messageloop的static接口得到当前线程的messageloop对象，如Lite::MessageLoop::current()，从面进行消息派发。</p>
+<h3 id="3-2-优先级队列"><a href="#3-2-优先级队列" class="headerlink" title="3.2 优先级队列"></a>3.2 优先级队列</h3><p>优先级队列没有什么特殊要求，直接用std::priority_queue即可。<br>一般至少需要 TaskQueue, DelayTaskQueue两条队列。</p>
+<h3 id="3-3-计时时钟"><a href="#3-3-计时时钟" class="headerlink" title="3.3 计时时钟"></a>3.3 计时时钟</h3><p>计时时钟需要选取固定的参考时间点作为起点，一般可以选择设备的boottime，这里为了方便，直接选用Greenwich Time作为参考点，直接调用gettimeofday，时间精度可以达到微妙。</p>
+<h3 id="3-4-线程等待唤醒"><a href="#3-4-线程等待唤醒" class="headerlink" title="3.4 线程等待唤醒"></a>3.4 线程等待唤醒</h3><p>STL对condition_variable的支持比较完善，这里对线程的等待唤醒处理可以直接用STL来处理。流程图如下：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line">for (;;) &#123;</span><br><span class="line">    bool did_work = delegate-&gt;DoWork();</span><br><span class="line">    if (!keep_running_)</span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">    did_work |= delegate-&gt;DoDelayedWork(&amp;delayed_work_time_);</span><br><span class="line">    if (!keep_running_)</span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">    if (did_work)</span><br><span class="line">        continue;</span><br><span class="line">    // idle now</span><br><span class="line">    did_work = delegate-&gt;DoIdleWork();</span><br><span class="line">    if (!keep_running_)</span><br><span class="line">        break;</span><br><span class="line"></span><br><span class="line">    if (did_work)</span><br><span class="line">        continue;</span><br><span class="line"></span><br><span class="line">    if (delayed_work_time_.is_null()) &#123;</span><br><span class="line">        std::unique_lock&lt;std::mutex&gt; lock(mutex_);</span><br><span class="line">        event_.wait(lock);</span><br><span class="line">    &#125; else &#123;</span><br><span class="line">        TimeDelta delay = delayed_work_time_ - TimeTicks::Now();</span><br><span class="line">        if (delay &gt; TimeDelta()) &#123;</span><br><span class="line">            std::unique_lock&lt;std::mutex&gt; lock(mutex_);</span><br><span class="line">            event_.wait_for(lock, std::chrono::milliseconds(delay.InMilliseconds()));</span><br><span class="line">        &#125; else &#123;</span><br><span class="line">            delayed_work_time_ = TimeTicks();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="4-总结"><a href="#4-总结" class="headerlink" title="4. 总结"></a>4. 总结</h2><p>跨平台messageloop在客户端开发中得到了广泛的应用，很好地处理了客户端网络高并发前提下的数据处理流程。<br>现在已经已经抽取成独立的公共组件<a href="https://github.com/jasenhuang/DispatchLite.git" target="_blank" rel="external">Dispatch-Lite</a>，使用接口参照gcd的接口设计方案:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">/* init dispatch first */</span><br><span class="line">dispatch_init();</span><br><span class="line"></span><br><span class="line">/* dispatch on preallocate logic thread */</span><br><span class="line">dispatch_logic_async([=]&#123;</span><br><span class="line">    //your code here</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">/* dispatch on specific thread */</span><br><span class="line">dispatch_thread_async(thread, [=]&#123;</span><br><span class="line">    //your code here</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">/* dispatch on current thread after 500ms */</span><br><span class="line">dispatch_current_after(500, [=]&#123;</span><br><span class="line">    //your code here</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></p>
+<p>有兴趣的同学可前往下载。欢迎拍砖～</p>
+
       
     </div>
 
@@ -263,6 +307,22 @@
     </div>
 
     <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/iOS/" rel="tag">#iOS</a>
+          
+            <a href="/tags/Android/" rel="tag">#Android</a>
+          
+            <a href="/tags/跨平台/" rel="tag">#跨平台</a>
+          
+            <a href="/tags/NSRunLoop/" rel="tag">#NSRunLoop</a>
+          
+            <a href="/tags/Looper/" rel="tag">#Looper</a>
+          
+            <a href="/tags/c/" rel="tag">#c++</a>
+          
+        </div>
       
 
       
@@ -357,7 +417,7 @@
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>
@@ -390,7 +450,7 @@
               
             
             
-              <p class="post-toc-empty">此文章未包含目录</p>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-前言"><span class="nav-number">1.</span> <span class="nav-text">1. 前言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-消息循环"><span class="nav-number">2.</span> <span class="nav-text">2. 消息循环</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-事件源接收与分发"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 事件源接收与分发</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-延时处理"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 延时处理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-线程等待唤醒处理"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 线程等待唤醒处理</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-跨平台的MessageLoop实现"><span class="nav-number">3.</span> <span class="nav-text">3. 跨平台的MessageLoop实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#3-1-线程存储空间"><span class="nav-number">3.1.</span> <span class="nav-text">3.1 线程存储空间</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-2-优先级队列"><span class="nav-number">3.2.</span> <span class="nav-text">3.2 优先级队列</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-3-计时时钟"><span class="nav-number">3.3.</span> <span class="nav-text">3.3 计时时钟</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-4-线程等待唤醒"><span class="nav-number">3.4.</span> <span class="nav-text">3.4 线程等待唤醒</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-总结"><span class="nav-number">4.</span> <span class="nav-text">4. 总结</span></a></li></ol></div>
             
           </div>
           <div class="post-toc-indicator-bottom post-toc-indicator">

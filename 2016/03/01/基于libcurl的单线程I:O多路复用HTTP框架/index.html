@@ -41,7 +41,7 @@
 <link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="iOS,Android,C++,CURL,HTTP," />
+  <meta name="keywords" content="iOS,Android,C++,CURL,HTTP,跨平台," />
 
 
 
@@ -70,7 +70,7 @@
 <meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/multiplexio.png">
 <meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/curlnetworking.png">
 <meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/multisocket.png">
-<meta property="og:updated_time" content="2016-03-01T12:39:26.000Z">
+<meta property="og:updated_time" content="2016-03-02T04:30:36.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="基于libcurl的单线程I/O多路复用HTTP框架">
 <meta name="twitter:description" content="1. 前言开发iOS已经有一段时间，在每一个成熟的app开发中，一定少不了要和后台数据进行数据交互，这个时候一个好的网络框架就显得很重要。
@@ -83,7 +83,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     scheme: 'Muse',
-    sidebar: {"position":"left","display":"post"},
+    sidebar: {"position":"left","display":"hide"},
     fancybox: true,
     motion: true,
     duoshuo: {
@@ -233,7 +233,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-o"></i>
             </span>
-            <span class="post-meta-item-text">发表于</span>
+            <span class="post-meta-item-text">Jasen Huang 发表于</span>
             <time itemprop="dateCreated" datetime="2016-03-01T14:40:59+08:00" content="2016-03-01">
               2016-03-01
             </time>
@@ -262,13 +262,13 @@
 
       
         <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>开发iOS已经有一段时间，在每一个成熟的app开发中，一定少不了要和后台数据进行数据交互，这个时候一个好的网络框架就显得很重要。</p>
-<h3 id="1-1-HTTP和跨平台"><a href="#1-1-HTTP和跨平台" class="headerlink" title="1.1 HTTP和跨平台"></a>1.1 HTTP和跨平台</h3><p>HTTP请求在app开发中应用广泛。iOS本身就带有很成熟的http api，NSURLRequest，NSURLConnection等，而业界优秀的开源库AFNetworking在系统的api上进行封装，使得HTTP的开发更加便捷。Android得益于java语言，也带有很强大的HttpClient。 但这些都只能在各自平台上运行，在跨平台的应用场景下，就需要有一个套统一的解决方案。在QQ邮箱移动客户端，微日历的开发过程中，就用到了跨平台的http网络实现框架，实现了iOS和Android两个平台共用一套底层网络代码。</p>
-<h3 id="1-2-libcurl"><a href="#1-2-libcurl" class="headerlink" title="1.2 libcurl"></a>1.2 libcurl</h3><p>libcurl是一个跨平台的多协议数据传输开源库，当然也包括http 协议。在QQ邮箱移动客户端，微日历的开发过程中，就基于libcurl进行了二次开发，抽取了一套通用的http client框架。</p>
-<h3 id="1-3-单线程I-O多路复用"><a href="#1-3-单线程I-O多路复用" class="headerlink" title="1.3 单线程I/O多路复用"></a>1.3 单线程I/O多路复用</h3><p>网络I/O模型在后台开发中应该是比较常见的，在后台开发中，为了达到负载与性能的最优，一般要采用select/epoll/kqueue等方式对网络I/O进行复用来提高线程的负载。其实这种思想在移动客户的开发中也同样的适用，AFNetworking框架中的网络实现就是采用了这种I/O模型。网络I/O模型包括 1：阻塞I/O模型 ，2：非阻塞I/O模型 ，3：多路复用I/O模型 ，4：异步I/O模型 。这里就不展开讲解，有兴趣的同学可以查阅《UNIX网络编程》。对于iOS和Android系统而言，异步I/O模型需要依赖系统的特殊支持，所以不同于后台开发，在移动客户端开发中，一般选用第三种模型(多路复用I/O模型)。下面通过几张图说明下 前三种模型的工作原理：<br><a id="more"></a><br>1：阻塞I/O模型<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/blockio.png" alt="blockio"></p>
+<h3 id="1-1-HTTP和跨平台"><a href="#1-1-HTTP和跨平台" class="headerlink" title="1.1 HTTP和跨平台"></a>1.1 HTTP和跨平台</h3><p>HTTP请求在app开发中应用广泛。iOS本身就带有很成熟的http api，NSURLRequest，NSURLConnection等，而业界优秀的开源库AFNetworking在系统的api上进行封装，使得HTTP的开发更加便捷。Android得益于java语言，也带有很强大的HttpClient。 但这些都只能在各自平台上运行，在跨平台的应用场景下，就需要有一个套统一的解决方案。在移动客户端的开发过程中，我们实现了跨平台的http网络框架，实现了iOS和Android两个平台共用一套底层网络代码。</p>
+<h3 id="1-2-libcurl"><a href="#1-2-libcurl" class="headerlink" title="1.2 libcurl"></a>1.2 libcurl</h3><p>libcurl是一个跨平台的多协议数据传输开源库，当然也包括http协议。在移动客户端的开发过程中，我们就尝试着基于libcurl进行了二次开发，抽取了一套通用的http client框架。</p>
+<h3 id="1-3-单线程I-O多路复用"><a href="#1-3-单线程I-O多路复用" class="headerlink" title="1.3 单线程I/O多路复用"></a>1.3 单线程I/O多路复用</h3><p>网络I/O模型在后台开发中应该是比较常见的，在后台开发中，为了达到负载与性能的最优，一般要采用select/epoll/kqueue等方式对网络I/O进行复用来提高线程的负载。其实这种思想在移动客户的开发中也同样的适用，AFNetworking框架中的网络实现就是采用了这种I/O模型。网络I/O模型包括 1：阻塞I/O模型 ，2：非阻塞I/O模型 ，3：多路复用I/O模型 ，4：异步I/O模型 。这里就不展开讲解，有兴趣的同学可以查阅《UNIX网络编程》。对于iOS和Android系统而言，异步I/O模型需要依赖系统的特殊支持，所以不同于后台开发，在移动客户端开发中，一般选用第三种模型(多路复用I/O模型)。<br><a id="more"></a><br>下面通过几张图说明下 前三种模型的工作原理：<br>1：阻塞I/O模型<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/blockio.png" alt="blockio"></p>
 <p>2：非阻塞I/O模型<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/noblockio.png" alt="nonblockio"></p>
 <p>3：多路复用I/O模型<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/multiplexio.png" alt="multiplexio"></p>
 <p>多路复用I/O模型在多个网络请求并发的时候，可以减少线程切换与数据共享加锁的成本，提高app的网络请求速度。现代的多路复用I/O模型一般会对select这里进行优化，比如采用libevent注册事件，让系统内核回调可读写的事件，从而解放select/epoll的线程调用，进一步提高性能。</p>
-<h2 id="2-跨平台HTTP框架的设计"><a href="#2-跨平台HTTP框架的设计" class="headerlink" title="2. 跨平台HTTP框架的设计"></a>2. 跨平台HTTP框架的设计</h2><p>QQ邮箱app 底层的邮件协议请求采用了 libcurl+libevent的多路复用I/O模型，在同一条网络线程里并发处理所有的网络请求，同时利用libevent监听http socket的可读可写状态，实时回调网络数据。下面先看一下qq邮箱移动客户端跨平台http框架的架构：<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/curlnetworking.png" alt="curlnetworking"></p>
+<h2 id="2-跨平台HTTP框架的设计"><a href="#2-跨平台HTTP框架的设计" class="headerlink" title="2. 跨平台HTTP框架的设计"></a>2. 跨平台HTTP框架的设计</h2><p>利用 libcurl+libevent的多路复用I/O模型，我们可以实现在同一条网络线程里，并发处理所有的网络请求，同时利用libevent监听http socket的可读可写状态，实时回调网络数据。下面先看一下q移动客户端跨平台http框架的架构：<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/curlnetworking.png" alt="curlnetworking"></p>
 <p>整个框架可分为下面几个部分：</p>
 <ol>
 <li>任务队列connection_operaion_queue</li>
@@ -279,9 +279,9 @@
 <h3 id="2-1-任务队列"><a href="#2-1-任务队列" class="headerlink" title="2.1 任务队列"></a>2.1 任务队列</h3><p>connection_operaion_queue简单地维护了一个优先级队列，可以对并发任务数进行限制。</p>
 <h3 id="2-2-链接任务单元"><a href="#2-2-链接任务单元" class="headerlink" title="2.2 链接任务单元"></a>2.2 链接任务单元</h3><p>connection_operation作为一个任务单元的封装，包含了网络请求对象connection，网络成功失败回调，进度回调，request，response等。connection_operation接收来自网络请求对象connection有delegate，并把状态实时回调给connection_operation_queue。</p>
 <h3 id="2-3-网络请求对象"><a href="#2-3-网络请求对象" class="headerlink" title="2.3 网络请求对象"></a>2.3 网络请求对象</h3><p>这里重点讲一下网络请求对象connection。前面提到的单线程多路复用I/O模型就应用到connection里。connection的http请求是基于libcurl的事件驱动来完成的。libcurl的multi接口需要不停的调用curl_multi_perform或者是curl_multi_socket_action来驱动流程的进行，如下面的图片所示：<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/multisocket.png" alt="multisocket"></p>
-<p>libcurl里面会维护着一个timeout的树，调用者在调用curl_multi_perform或者是curl_multi_socket_action的过程中，libcurl根据socket mode的变化，估算出下一次需要调用curl_multi_perform或者是curl_multi_socket_action的时间。libcurl需要上层轮询去调用接口，是为了等socket的可读可写状态变化，那么上层在轮询的过程中，可以采用select/epoll/libevent等几种方式 进行优化，降低cpu的空转，提高响应速度。在qq邮箱通用协议层的设计中，我们是选取了libevent的方式，向系统内核注册事件来监控socket的状态，最大化地提高效率。</p>
+<p>libcurl里面会维护着一个timeout的树，调用者在调用curl_multi_perform或者是curl_multi_socket_action的过程中，libcurl根据socket mode的变化，估算出下一次需要调用curl_multi_perform或者是curl_multi_socket_action的时间。libcurl需要上层轮询去调用接口，是为了等socket的可读可写状态变化，那么上层在轮询的过程中，可以采用select/epoll/libevent等几种方式 进行优化，降低cpu的空转，提高响应速度。我们选取libevent的方式，向系统内核注册事件来监控socket的状态，最大化地提高效率。</p>
 <h4 id="2-4-并发重用"><a href="#2-4-并发重用" class="headerlink" title="2.4 并发重用"></a>2.4 并发重用</h4><p>connection_runner是一个lazy initialze 的全局静态对象，里面维护着curl里的CURLM对象，所有的curl easy handler最终都会通过这个对象进行网络请求。CURLM对象会对easy handler进行socket cache，dns cache等操作，提高http1.1(1.0的时候http socket复用不了)情况下socket的复用率，从面减少tcp三次握手时间，ssl handshake的时间等。</p>
-<h2 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h2><p>基于libcurl的单身线程I/O多路复用网络请求模型在qq邮箱iOS客户端和Android客户端的通用邮件协议层得到广泛的应用。保证了多账号多协议的客户端网络请求的速度与并发量。</p>
+<h2 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h2><p>基于libcurl的单身线程I/O多路复用网络请求模型在iOS客户端和Android客户端的开发中得到广泛的应用。保证了多账号多协议的客户端网络请求的速度与并发量。</p>
 <p>由于libcurl是纯c实现的，对移动客户端开发人员来讲并不友好，所以现在已经对libcurl进行重新的包装，结合Dispatch-Lite，参照在iOS开发中应用广泛的Object-C网络库的接口设计，把这个模型已经抽取成公共组件 <a href="https://github.com/jasenhuang/CURLNetworking.git" target="_blank" rel="external">CURLNetworking</a>，有兴趣的同学可稳步公共组件进行查看。</p>
 <p>欢迎拍砖～～～</p>
 
@@ -308,6 +308,8 @@
           
             <a href="/tags/HTTP/" rel="tag">#HTTP</a>
           
+            <a href="/tags/跨平台/" rel="tag">#跨平台</a>
+          
         </div>
       
 
@@ -315,8 +317,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2016/03/01/线程与消息循环-MessageLoop/" rel="next" title="线程与消息循环(MessageLoop)">
-                <i class="fa fa-chevron-left"></i> 线程与消息循环(MessageLoop)
+              <a href="/2016/03/01/线程与消息循环-MessageLoop/" rel="next" title="线程与消息循环-MessageLoop">
+                <i class="fa fa-chevron-left"></i> 线程与消息循环-MessageLoop
               </a>
             
           </div>
@@ -399,7 +401,7 @@
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>

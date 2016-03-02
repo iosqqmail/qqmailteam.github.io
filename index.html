@@ -73,7 +73,7 @@
   var NexT = window.NexT || {};
   var CONFIG = {
     scheme: 'Muse',
-    sidebar: {"position":"left","display":"post"},
+    sidebar: {"position":"left","display":"hide"},
     fancybox: true,
     motion: true,
     duoshuo: {
@@ -234,7 +234,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-o"></i>
             </span>
-            <span class="post-meta-item-text">发表于</span>
+            <span class="post-meta-item-text">Jasen Huang 发表于</span>
             <time itemprop="dateCreated" datetime="2016-03-01T14:40:59+08:00" content="2016-03-01">
               2016-03-01
             </time>
@@ -264,9 +264,9 @@
       
         
           <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>开发iOS已经有一段时间，在每一个成熟的app开发中，一定少不了要和后台数据进行数据交互，这个时候一个好的网络框架就显得很重要。</p>
-<h3 id="1-1-HTTP和跨平台"><a href="#1-1-HTTP和跨平台" class="headerlink" title="1.1 HTTP和跨平台"></a>1.1 HTTP和跨平台</h3><p>HTTP请求在app开发中应用广泛。iOS本身就带有很成熟的http api，NSURLRequest，NSURLConnection等，而业界优秀的开源库AFNetworking在系统的api上进行封装，使得HTTP的开发更加便捷。Android得益于java语言，也带有很强大的HttpClient。 但这些都只能在各自平台上运行，在跨平台的应用场景下，就需要有一个套统一的解决方案。在QQ邮箱移动客户端，微日历的开发过程中，就用到了跨平台的http网络实现框架，实现了iOS和Android两个平台共用一套底层网络代码。</p>
-<h3 id="1-2-libcurl"><a href="#1-2-libcurl" class="headerlink" title="1.2 libcurl"></a>1.2 libcurl</h3><p>libcurl是一个跨平台的多协议数据传输开源库，当然也包括http 协议。在QQ邮箱移动客户端，微日历的开发过程中，就基于libcurl进行了二次开发，抽取了一套通用的http client框架。</p>
-<h3 id="1-3-单线程I-O多路复用"><a href="#1-3-单线程I-O多路复用" class="headerlink" title="1.3 单线程I/O多路复用"></a>1.3 单线程I/O多路复用</h3><p>网络I/O模型在后台开发中应该是比较常见的，在后台开发中，为了达到负载与性能的最优，一般要采用select/epoll/kqueue等方式对网络I/O进行复用来提高线程的负载。其实这种思想在移动客户的开发中也同样的适用，AFNetworking框架中的网络实现就是采用了这种I/O模型。网络I/O模型包括 1：阻塞I/O模型 ，2：非阻塞I/O模型 ，3：多路复用I/O模型 ，4：异步I/O模型 。这里就不展开讲解，有兴趣的同学可以查阅《UNIX网络编程》。对于iOS和Android系统而言，异步I/O模型需要依赖系统的特殊支持，所以不同于后台开发，在移动客户端开发中，一般选用第三种模型(多路复用I/O模型)。下面通过几张图说明下 前三种模型的工作原理：<br>
+<h3 id="1-1-HTTP和跨平台"><a href="#1-1-HTTP和跨平台" class="headerlink" title="1.1 HTTP和跨平台"></a>1.1 HTTP和跨平台</h3><p>HTTP请求在app开发中应用广泛。iOS本身就带有很成熟的http api，NSURLRequest，NSURLConnection等，而业界优秀的开源库AFNetworking在系统的api上进行封装，使得HTTP的开发更加便捷。Android得益于java语言，也带有很强大的HttpClient。 但这些都只能在各自平台上运行，在跨平台的应用场景下，就需要有一个套统一的解决方案。在移动客户端的开发过程中，我们实现了跨平台的http网络框架，实现了iOS和Android两个平台共用一套底层网络代码。</p>
+<h3 id="1-2-libcurl"><a href="#1-2-libcurl" class="headerlink" title="1.2 libcurl"></a>1.2 libcurl</h3><p>libcurl是一个跨平台的多协议数据传输开源库，当然也包括http协议。在移动客户端的开发过程中，我们就尝试着基于libcurl进行了二次开发，抽取了一套通用的http client框架。</p>
+<h3 id="1-3-单线程I-O多路复用"><a href="#1-3-单线程I-O多路复用" class="headerlink" title="1.3 单线程I/O多路复用"></a>1.3 单线程I/O多路复用</h3><p>网络I/O模型在后台开发中应该是比较常见的，在后台开发中，为了达到负载与性能的最优，一般要采用select/epoll/kqueue等方式对网络I/O进行复用来提高线程的负载。其实这种思想在移动客户的开发中也同样的适用，AFNetworking框架中的网络实现就是采用了这种I/O模型。网络I/O模型包括 1：阻塞I/O模型 ，2：非阻塞I/O模型 ，3：多路复用I/O模型 ，4：异步I/O模型 。这里就不展开讲解，有兴趣的同学可以查阅《UNIX网络编程》。对于iOS和Android系统而言，异步I/O模型需要依赖系统的特殊支持，所以不同于后台开发，在移动客户端开发中，一般选用第三种模型(多路复用I/O模型)。<br>
           <div class="post-more-link text-center">
             <a class="btn" href="/2016/03/01/基于libcurl的单线程I:O多路复用HTTP框架/#more" rel="contents">
               阅读全文 &raquo;
@@ -316,7 +316,7 @@
               
                 
                 <a class="post-title-link" href="/2016/03/01/线程与消息循环-MessageLoop/" itemprop="url">
-                  线程与消息循环(MessageLoop)
+                  线程与消息循环-MessageLoop
                 </a>
               
             
@@ -328,7 +328,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-o"></i>
             </span>
-            <span class="post-meta-item-text">发表于</span>
+            <span class="post-meta-item-text">Jasen Huang 发表于</span>
             <time itemprop="dateCreated" datetime="2016-03-01T14:30:59+08:00" content="2016-03-01">
               2016-03-01
             </time>
@@ -357,9 +357,29 @@
 
       
         
-          
-            
-          
+          <h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><p>每一个需要与用户进行交互的app都需要至少一个消息循环，来处理用户事件的输入和各种I/O事件。iOS和Andriod都有各自系统的MessageLoop，iOS的叫NSRunLoop，Android的叫Looper。消息循环有利于提交系统的影响速度，在现代操作系统中得到了广泛的应用。</p>
+<h2 id="2-消息循环"><a href="#2-消息循环" class="headerlink" title="2. 消息循环"></a>2. 消息循环</h2><p>消息循环的工作原理大同小异，原理上就是一个while循环+消息队列不断接收任务。具体可以分为下面几个部分的内容：</p>
+<ol>
+<li>事件源接收与分发</li>
+<li>延时处理</li>
+<li>线程等待唤醒处理</li>
+</ol>
+<h3 id="2-1-事件源接收与分发"><a href="#2-1-事件源接收与分发" class="headerlink" title="2.1 事件源接收与分发"></a>2.1 事件源接收与分发</h3><p>MessageLoop内部一般会有一个消息队列，等待要执行的任务push进来。下面通过两张图简单说明下：</p>
+<ul>
+<li><p>iOS的NSRunLoop<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/runloop.png" alt="NSRunLoop"></p>
+</li>
+<li><p>Android的Looper<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/looper.png" alt="Looper"></p>
+</li>
+</ul>
+<h3 id="2-2-延时处理"><a href="#2-2-延时处理" class="headerlink" title="2.2 延时处理"></a>2.2 延时处理</h3><p>延时任务在消息处理中很常见，消息循环一般要针对延时的任务进行等待处理。这个时候就需要两个东西：</p>
+<ol>
+<li>延时队列</li>
+<li>时钟计数
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/03/01/线程与消息循环-MessageLoop/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
@@ -416,7 +436,7 @@
             <span class="post-meta-item-icon">
               <i class="fa fa-calendar-o"></i>
             </span>
-            <span class="post-meta-item-text">发表于</span>
+            <span class="post-meta-item-text">Jasen Huang 发表于</span>
             <time itemprop="dateCreated" datetime="2016-01-04T00:00:00+08:00" content="2016-01-04">
               2016-01-04
             </time>
@@ -528,7 +548,7 @@
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">10</span>
+                <span class="site-state-item-count">14</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>

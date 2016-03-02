@@ -69,7 +69,7 @@
 <meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/looper.png">
 <meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/timeline.png">
 <meta property="og:image" content="http://7xptxv.com1.z0.glb.clouddn.com/threadlocal.png">
-<meta property="og:updated_time" content="2016-03-02T04:29:41.000Z">
+<meta property="og:updated_time" content="2016-03-02T04:34:08.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="线程与消息循环-MessageLoop">
 <meta name="twitter:description" content="1. 前言每一个需要与用户进行交互的app都需要至少一个消息循环，来处理用户事件的输入和各种I/O事件。iOS和Andriod都有各自系统的MessageLoop，iOS的叫NSRunLoop，Android的叫Looper。消息循环有利于提交系统的影响速度，在现代操作系统中得到了广泛的应用。
@@ -272,14 +272,15 @@
 <li><p>iOS的NSRunLoop<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/runloop.png" alt="NSRunLoop"></p>
 </li>
 <li><p>Android的Looper<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/looper.png" alt="Looper"></p>
+<a id="more"></a>
 </li>
 </ul>
 <h3 id="2-2-延时处理"><a href="#2-2-延时处理" class="headerlink" title="2.2 延时处理"></a>2.2 延时处理</h3><p>延时任务在消息处理中很常见，消息循环一般要针对延时的任务进行等待处理。这个时候就需要两个东西：</p>
 <ol>
 <li>延时队列</li>
-<li>时钟计数<a id="more"></a>
-时钟计数需要一个系统固定的时间作为所有任务计时的起点，一般我们会采用系统的启动时间boottime，延时队列用来存储还未到时间执行的任务。消息循环每次loop的时候，会检查当前时钟有没有达到延时队列里任务的时间点，有的话就取出来执行，没有就等待下一次loop。假如有某些任务执行时间比较长，会导致延时队列里的任务已经过了要执行的时间点。为了保证效率，这个时候消息循环会统一对过期的任务进行调用。所以<strong>延时任务只能保证在&gt;=delay的时间点执行</strong>。<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/timeline.png" alt="timeline"></li>
+<li>时钟计数</li>
 </ol>
+<p>时钟计数需要一个系统固定的时间作为所有任务计时的起点，一般我们会采用系统的启动时间boottime，延时队列用来存储还未到时间执行的任务。消息循环每次loop的时候，会检查当前时钟有没有达到延时队列里任务的时间点，有的话就取出来执行，没有就等待下一次loop。假如有某些任务执行时间比较长，会导致延时队列里的任务已经过了要执行的时间点。为了保证效率，这个时候消息循环会统一对过期的任务进行调用。所以<strong>延时任务只能保证在&gt;=delay的时间点执行</strong>。<br><img src="http://7xptxv.com1.z0.glb.clouddn.com/timeline.png" alt="timeline"></p>
 <h3 id="2-3-线程等待唤醒处理"><a href="#2-3-线程等待唤醒处理" class="headerlink" title="2.3 线程等待唤醒处理"></a>2.3 线程等待唤醒处理</h3><p>消息循环本质是一个等待队列，那么这个时候经典的生产者消费者模型就派上用场了。“生产者消费者”模型可以用信号量，管道等方法来实现。在实际的项目中，一般会采用pthread的pthread_cond_wait,pthread_cond_signal,pthread_cond_broadcast等接口来实现。如果考虑到linux和window平台的跨平台场景，那可以直接用STL的condition_variable。(window对pthread的支持不是很好)。</p>
 <h2 id="3-跨平台的MessageLoop实现"><a href="#3-跨平台的MessageLoop实现" class="headerlink" title="3. 跨平台的MessageLoop实现"></a>3. 跨平台的MessageLoop实现</h2><p>介绍完消息循环的工作原理后，我们来看一下在mailapp协议层的设计中，跨平台的messageloop是怎么实现的。跨平台的MessageLoop最开始是参照google的chromium框架实现的。google的chromium库庞大复杂，跨平台的MessageLoop只是抽取了其它一部分功能进行实现，去掉了平台相关的UI线程消息循环实现。下面通过一张图介绍一下MessageLoop的架构设计：</p>
 <p>按照前面的消息循环原理，我们需要实现以下几个功能：</p>

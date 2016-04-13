@@ -160,7 +160,7 @@
             
               <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
             
-            归档
+            博文
           </a>
         </li>
       
@@ -198,15 +198,111 @@
 
     
     
+
+    
       
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                
+                <a class="post-title-link" href="/2016/04/10/CSP-Concurrency-Patterns-In-Swift/" itemprop="url">
+                  CSP Concurrency Patterns In Swift
+                </a>
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">jasonjfeng(冯牮) 发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-10T22:45:16+08:00" content="2016-04-10">
+              2016-04-10
+            </time>
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
       
-        
-        
-        
       
 
       
-    
+        
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>这篇文章的主要内容，是从 <a href="https://talks.golang.org/2012/concurrency.slide">Go Concurrency Patterns</a> 翻译过来的。</p>
+<p>原文是介绍 <a href="http://golang.info/">Golang</a> 里面的 <a href="https://en.wikipedia.org/wiki/Communicating_sequential_processes">CSP</a> 并发模型(Communicating Sequential Processes)，这里则是使用一个基于 Swift3.0 的库 <a href="https://github.com/VeniceX/Venice">Venice</a> 编写的代码。</p>
+<p>这篇文章的主要目的，并不是鼓励大家立刻就用 Swift 进行后端开发(至少不是目前这个阶段)，但是，对于想尝试全栈开发的 iOS 工程师来说，则可以通过这篇文章入门学习 CSP 这种并发编程模型。</p>
+<p><em>2016/04/08 update: 为了成功运行本文中的代码，需要安装 <a href="https://swift.org/builds/development/xcode/swift-DEVELOPMENT-SNAPSHOT-2016-03-24-a/swift-DEVELOPMENT-SNAPSHOT-2016-03-24-a-osx.pkg">https://swift.org/builds/development/xcode/swift-DEVELOPMENT-SNAPSHOT-2016-03-24-a/swift-DEVELOPMENT-SNAPSHOT-2016-03-24-a-osx.pkg</a> 这个版本的 swift。</em></p>
+<p><em>2016/04/13 update: <a href="https://github.com/VeniceX/Venice">Venice</a> 里面的 Channel 不再支持基于自定义运算符的读写操作，只能使用 func api。</em></p>
+<h3 id="为什么要讨论并发-concurrency"><a href="#为什么要讨论并发-concurrency" class="headerlink" title="为什么要讨论并发 (concurrency)"></a>为什么要讨论并发 (concurrency)</h3><p>观察一下我们周围，能发现什么？</p>
+<p>我们的世界里发生的事情，总是一步一步按顺序执行的吗？</p>
+<p>或者说，发生在我们身边的所有的事件，是一个很复杂的组合体，里面充满了更独立、更小型的事件单元，这些单元之间，则是有各种各样的交互和组织关系。</p>
+<p>其实就像后者描述的这样，顺序处理 (Sequential processing) 并不是完美的建模思路。</p>
+<h3 id="什么是并发？"><a href="#什么是并发？" class="headerlink" title="什么是并发？"></a>什么是并发？</h3><p>并发是独立的计算任务的组合。</p>
+<p>并发是一种软件的设计模式，用并发的思维模式，可以编写出更清晰的代码。</p>
+<h3 id="并发-concurrency-不是并行-parallelism"><a href="#并发-concurrency-不是并行-parallelism" class="headerlink" title="并发 (concurrency) 不是并行 (parallelism)"></a>并发 (concurrency) 不是并行 (parallelism)</h3><p>并发不是并行，但是可以在并行的基础上形成并发。</p>
+<p>如果只有一个单核处理器(单线程模式)，则谈不上并行，但是仍然可以写出并发的代码。</p>
+<p>另一方面，如果一段代码已经按照并发的思路进行了设计，那它也是可以很容易的在多核处理器(多线程模式)中并行执行。</p>
+<p><em>关于这个话题，更详细的讨论可以参看 <a href="http://talks.golang.org/2012/waza.slide">Concurrency is not Parallelism</a></em><br>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/04/10/CSP-Concurrency-Patterns-In-Swift/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
+        
+      
+    </div>
+
+    <div>
+      
+    </div>
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+
 
     
       
@@ -541,8 +637,8 @@
         <nav class="site-state motion-element">
           <div class="site-state-item site-state-posts">
             <a href="/archives">
-              <span class="site-state-item-count">3</span>
-              <span class="site-state-item-name">日志</span>
+              <span class="site-state-item-count">4</span>
+              <span class="site-state-item-name">博客</span>
             </a>
           </div>
           
@@ -551,7 +647,7 @@
           
             <div class="site-state-item site-state-tags">
               
-                <span class="site-state-item-count">14</span>
+                <span class="site-state-item-count">17</span>
                 <span class="site-state-item-name">标签</span>
               
             </div>

@@ -1,0 +1,769 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="FRP,ReactiveCocoa," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="collect + combineLatest 或者 zipRAC 里面的 collect 是一个比较容易理解的操作，它的强大之处，在于和其他的操作进行组合之后，可以完成很复杂的业务逻辑。在看真实业务代码之前，先通过下面的代码初步了解一下这种 Pipeline 的行为模式。collect 相当于 Rx 中的 ToArray 操作
+版本 1123456789101112131415161718192">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 ReactiveCocoa 事半功倍的写代码（三）">
+<meta property="og:url" content="http://iosqqmail.github.io/2016/04/28/The-Power-Of-Composition-In-FRP-Part-3/index.html">
+<meta property="og:site_name" content="QQ邮箱的技术博客">
+<meta property="og:description" content="collect + combineLatest 或者 zipRAC 里面的 collect 是一个比较容易理解的操作，它的强大之处，在于和其他的操作进行组合之后，可以完成很复杂的业务逻辑。在看真实业务代码之前，先通过下面的代码初步了解一下这种 Pipeline 的行为模式。collect 相当于 Rx 中的 ToArray 操作
+版本 1123456789101112131415161718192">
+<meta property="og:image" content="http://iosqqmail.github.io/images/edit_contact.png">
+<meta property="og:image" content="http://iosqqmail.github.io/images/edit_email.png">
+<meta property="og:updated_time" content="2016-05-06T04:56:36.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="用 ReactiveCocoa 事半功倍的写代码（三）">
+<meta name="twitter:description" content="collect + combineLatest 或者 zipRAC 里面的 collect 是一个比较容易理解的操作，它的强大之处，在于和其他的操作进行组合之后，可以完成很复杂的业务逻辑。在看真实业务代码之前，先通过下面的代码初步了解一下这种 Pipeline 的行为模式。collect 相当于 Rx 中的 ToArray 操作
+版本 1123456789101112131415161718192">
+<meta name="twitter:image" content="http://iosqqmail.github.io/images/edit_contact.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"hide"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 用 ReactiveCocoa 事半功倍的写代码（三） | QQ邮箱的技术博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74497486-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">QQ邮箱的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            博文
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+      
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                用 ReactiveCocoa 事半功倍的写代码（三）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">jasonjfeng(冯牮) 发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-28T11:31:36+08:00" content="2016-04-28">
+              2016-04-28
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/28/The-Power-Of-Composition-In-FRP-Part-3/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/04/28/The-Power-Of-Composition-In-FRP-Part-3/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="collect-combineLatest-或者-zip"><a href="#collect-combineLatest-或者-zip" class="headerlink" title="collect + combineLatest 或者 zip"></a>collect + combineLatest 或者 zip</h3><p>RAC 里面的 <a href="http://reactivex.io/documentation/operators/to.html" target="_blank" rel="external">collect</a> 是一个比较容易理解的操作，它的强大之处，在于和其他的操作进行组合之后，可以完成很复杂的业务逻辑。在看真实业务代码之前，先通过下面的代码初步了解一下这种 Pipeline 的行为模式。<code>collect 相当于 Rx 中的 ToArray 操作</code></p>
+<h4 id="版本-1"><a href="#版本-1" class="headerlink" title="版本 1"></a>版本 1</h4><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)testCollectSignalsAndCombineLatestOrZip &#123;</span><br><span class="line">    <span class="comment">//1</span></span><br><span class="line">    RACSignal *numbers = @[@(<span class="number">0</span>), @(<span class="number">1</span>), @(<span class="number">2</span>)].rac_sequence.signal;</span><br><span class="line">    </span><br><span class="line">    RACSignal *letters1 = @[<span class="string">@"A"</span>, <span class="string">@"B"</span>, <span class="string">@"C"</span>].rac_sequence.signal;</span><br><span class="line">    RACSignal *letters2 = @[<span class="string">@"X"</span>, <span class="string">@"Y"</span>, <span class="string">@"Z"</span>].rac_sequence.signal;</span><br><span class="line">    RACSignal *letters3 = @[<span class="string">@"M"</span>, <span class="string">@"N"</span>].rac_sequence.signal;</span><br><span class="line">    <span class="built_in">NSArray</span> *arrayOfSignal = @[letters1, letters2, letters3]; <span class="comment">//2</span></span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    [[[numbers</span><br><span class="line">       map:^<span class="keyword">id</span>(<span class="built_in">NSNumber</span> *n) &#123;</span><br><span class="line">           <span class="comment">//3</span></span><br><span class="line">           <span class="keyword">return</span> arrayOfSignal[n.integerValue];</span><br><span class="line">       &#125;]</span><br><span class="line">      collect]  <span class="comment">//4</span></span><br><span class="line">     subscribeNext:^(<span class="built_in">NSArray</span> *array) &#123;</span><br><span class="line">         DDLogVerbose(<span class="string">@"%@, %@"</span>, [array class], array);</span><br><span class="line">     &#125; completed:^&#123;</span><br><span class="line">         DDLogVerbose(<span class="string">@"completed"</span>);</span><br><span class="line">     &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>这个代码纯粹只是为了演示 collect 的行为模式：</p>
+<ol>
+<li>构造一个 NSNumber 的数组，包含数字 0、1、2，并且转换成 signal。</li>
+<li>用同样的方法，构造 3 个字符串的数组，并转换成 signal，再把得到的 3 个 signal 放到数组 arrayOfSignal 中。</li>
+<li>这里形成了一个 signal 的嵌套，但是和以前的处理方式不一样，并不会直接在后续环节中使用 flatten 操作，而是先使用 collect。</li>
+<li>collect 操作会把 Pipeline 中所有的 next 发送的数据收集到一个 NSArray 中，然后一次性通过 next 发送给后续的环节。</li>
+</ol>
+<p>这段代码的执行结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">2016-04-28 17:45:38:034 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] __NSArrayM, (</span><br><span class="line">    &quot;&lt;RACDynamicSignal: 0x7ffee1c9dc10&gt; name: &quot;,</span><br><span class="line">    &quot;&lt;RACDynamicSignal: 0x7ffee1c9dda0&gt; name: &quot;,</span><br><span class="line">    &quot;&lt;RACDynamicSignal: 0x7ffee1c9df20&gt; name: &quot;</span><br><span class="line">)</span><br><span class="line">2016-04-28 17:45:38:034 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] completed</span><br></pre></td></tr></table></figure>
+<p>可以看到，array 里面包含的是 3 个 signal。另外，因为 signal 已经形成嵌套了，所以迟早是要 flatten 的，那么如何 flatten 呢？</p>
+<h4 id="版本-2"><a href="#版本-2" class="headerlink" title="版本 2"></a>版本 2</h4><p>因为 array 里面有 3 个 signal，所以可以构造一种 Pipeline，把这 3 个 signal 合并成一个 signal，然后对合并后的 signal 再做 flatten 操作。合并的时候，可以有不同的策略，先看下面这段代码：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)testCollectSignalsAndCombineLatestOrZip &#123;</span><br><span class="line">    RACSignal *numbers = @[@(<span class="number">0</span>), @(<span class="number">1</span>), @(<span class="number">2</span>)].rac_sequence.signal;</span><br><span class="line">    </span><br><span class="line">    RACSignal *letters1 = @[<span class="string">@"A"</span>, <span class="string">@"B"</span>, <span class="string">@"C"</span>].rac_sequence.signal;</span><br><span class="line">    RACSignal *letters2 = @[<span class="string">@"X"</span>, <span class="string">@"Y"</span>, <span class="string">@"Z"</span>].rac_sequence.signal;</span><br><span class="line">    RACSignal *letters3 = @[<span class="string">@"M"</span>, <span class="string">@"M"</span>].rac_sequence.signal;</span><br><span class="line">    <span class="built_in">NSArray</span> *arrayOfSignal = @[letters1, letters2, letters3];</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    [[[[numbers</span><br><span class="line">        map:^<span class="keyword">id</span>(<span class="built_in">NSNumber</span> *n) &#123;</span><br><span class="line">            <span class="keyword">return</span> arrayOfSignal[n.integerValue];</span><br><span class="line">        &#125;]</span><br><span class="line">       collect]</span><br><span class="line">      flattenMap:^RACStream *(<span class="built_in">NSArray</span> *arrayOfSignal) &#123;</span><br><span class="line">          <span class="comment">//1</span></span><br><span class="line">          <span class="keyword">return</span> [RACSignal combineLatest:arrayOfSignal</span><br><span class="line">                                   reduce:^(<span class="built_in">NSString</span> *first, <span class="built_in">NSString</span> *second, <span class="built_in">NSString</span> *third) &#123;</span><br><span class="line">                                       <span class="keyword">return</span> [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"%@-%@-%@"</span>, first, second, third];</span><br><span class="line">                                   &#125;];</span><br><span class="line">      &#125;]</span><br><span class="line">     subscribeNext:^(<span class="built_in">NSString</span> *x) &#123;</span><br><span class="line">         DDLogVerbose(<span class="string">@"%@, %@"</span>, [x class], x);</span><br><span class="line">     &#125; completed:^&#123;</span><br><span class="line">         DDLogVerbose(<span class="string">@"completed"</span>);</span><br><span class="line">     &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码在接收到 collect 发送的 array 之后，对这个数组里面的 signal 进行了一个 <a href="http://rxmarbles.com/#combineLatest" target="_blank" rel="external">combineLatest</a> 操作，这个时候，原本的 3 个 signal 被 reduce 成了一个 signal，这个 signal 继续被 flatten 一次，然后最终被 Pipeline 的订阅者接收到。</p>
+<p>这段代码的执行结果如下(也可能和下面的结果完全不一样，这是正常的，combineLatest 操作就是这样)：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">2016-04-28 18:48:14:453 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] NSTaggedPointerString, A-Z-N</span><br><span class="line">2016-04-28 18:48:14:453 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] NSTaggedPointerString, B-Z-N</span><br><span class="line">2016-04-28 18:48:14:454 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] NSTaggedPointerString, C-Z-N</span><br><span class="line">2016-04-28 18:48:14:455 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] completed</span><br></pre></td></tr></table></figure>
+<h4 id="版本-3"><a href="#版本-3" class="headerlink" title="版本 3"></a>版本 3</h4><p>除了 combineLatest，<a href="http://rxmarbles.com/#zip" target="_blank" rel="external">zip</a> 操作也可以把多个 signal reduce 成一个，但是 zip 的策略是不一样的。</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)testCollectSignalsAndCombineLatestOrZip &#123;</span><br><span class="line">    RACSignal *numbers = @[@(<span class="number">0</span>), @(<span class="number">1</span>), @(<span class="number">2</span>)].rac_sequence.signal;</span><br><span class="line">    </span><br><span class="line">    RACSignal *letters1 = @[<span class="string">@"A"</span>, <span class="string">@"B"</span>, <span class="string">@"C"</span>].rac_sequence.signal;</span><br><span class="line">    RACSignal *letters2 = @[<span class="string">@"X"</span>, <span class="string">@"Y"</span>, <span class="string">@"Z"</span>].rac_sequence.signal;</span><br><span class="line">    RACSignal *letters3 = @[<span class="string">@"M"</span>, <span class="string">@"M"</span>].rac_sequence.signal;</span><br><span class="line">    <span class="built_in">NSArray</span> *arrayOfSignal = @[letters1, letters2, letters3];</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    [[[[numbers</span><br><span class="line">        map:^<span class="keyword">id</span>(<span class="built_in">NSNumber</span> *n) &#123;</span><br><span class="line">            <span class="keyword">return</span> arrayOfSignal[n.integerValue];<span class="comment">//!! this is Signal, but just use map NOT flatMap</span></span><br><span class="line">        &#125;]</span><br><span class="line">       collect]</span><br><span class="line">      flattenMap:^RACStream *(<span class="built_in">NSArray</span> *arrayOfSignal) &#123;</span><br><span class="line">          <span class="comment">//1</span></span><br><span class="line">          <span class="keyword">return</span> [RACSignal zip:arrayOfSignal</span><br><span class="line">                         reduce:^(<span class="built_in">NSString</span> *first, <span class="built_in">NSString</span> *second, <span class="built_in">NSString</span> *third) &#123;</span><br><span class="line">                             <span class="keyword">return</span> [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"%@-%@-%@"</span>, first, second, third];</span><br><span class="line">                             </span><br><span class="line">                         &#125;];</span><br><span class="line">      &#125;]</span><br><span class="line">     subscribeNext:^(<span class="built_in">NSString</span> *x) &#123;</span><br><span class="line">         DDLogVerbose(<span class="string">@"%@, %@"</span>, [x class], x);</span><br><span class="line">     &#125; completed:^&#123;</span><br><span class="line">         DDLogVerbose(<span class="string">@"completed"</span>);</span><br><span class="line">     &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码的执行结果是下面这个样子，不像前面的 combineLatest，zip 操作的结果，只能出现下面这种唯一的情况：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">2016-04-28 18:55:01:208 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] NSTaggedPointerString, A-X-M</span><br><span class="line">2016-04-28 18:55:01:209 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] NSTaggedPointerString, B-Y-N</span><br><span class="line">2016-04-28 18:55:01:209 [com.ReactiveCocoa.RACScheduler.backgroundScheduler] completed</span><br></pre></td></tr></table></figure>
+<h3 id="保存联系人的头像"><a href="#保存联系人的头像" class="headerlink" title="保存联系人的头像"></a>保存联系人的头像</h3><p>前面的代码很抽象，在业务中，能用上这种 Pipeline 吗？当然是可以的，比如下面这段代码：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">- (RACSignal *)savaAvatar:(<span class="built_in">UIImage</span> *)image withContact:(FMContact *)contact &#123;</span><br><span class="line">    <span class="built_in">NSParameterAssert</span>(image != <span class="literal">nil</span>);</span><br><span class="line">    <span class="built_in">NSParameterAssert</span>(contact.contactItems.count &gt; <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//1</span></span><br><span class="line">    RACSignal *addrs = [[contact.contactItems.rac_sequence</span><br><span class="line">                         map:^(FMContactItem *contactItem) &#123;</span><br><span class="line">                             <span class="keyword">return</span> contactItem.email;</span><br><span class="line">                         &#125;]</span><br><span class="line">                        signal];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [[[[addrs</span><br><span class="line">               map:^<span class="keyword">id</span>(<span class="built_in">NSString</span> *emailAddr) &#123;</span><br><span class="line">                   <span class="keyword">return</span> [[[[FMAvatarManager shareInstance] rac_setAvatar:emailAddr image:image] <span class="comment">//2</span></span><br><span class="line">                            map:^<span class="keyword">id</span>(<span class="keyword">id</span> value) &#123;</span><br><span class="line">                                <span class="comment">//4</span></span><br><span class="line">                                <span class="keyword">return</span> RACTuplePack(value, <span class="literal">nil</span>);</span><br><span class="line">                            &#125;]</span><br><span class="line">                           catch:^RACSignal *(<span class="built_in">NSError</span> *error) &#123;</span><br><span class="line">                               <span class="comment">//3</span></span><br><span class="line">                               <span class="keyword">return</span> [RACSignal <span class="keyword">return</span>:RACTuplePack(<span class="literal">nil</span>, error)];</span><br><span class="line">                           &#125;];</span><br><span class="line">               &#125;]</span><br><span class="line">              collect]  <span class="comment">//5</span></span><br><span class="line">             flattenMap:^RACStream *(<span class="built_in">NSArray</span>&lt;RACSignal *&gt; *arrayOfSignal) &#123;             </span><br><span class="line">                 <span class="keyword">return</span> [[RACSignal zip:arrayOfSignal]  <span class="comment">//6</span></span><br><span class="line">                         map:^<span class="keyword">id</span>(RACTuple *tuple) &#123;     <span class="comment">//7</span></span><br><span class="line">                             <span class="comment">//8</span></span><br><span class="line">                             <span class="keyword">return</span> [tuple allObjects];</span><br><span class="line">                         &#125;];</span><br><span class="line">             &#125;]</span><br><span class="line">            map:^<span class="keyword">id</span>(<span class="built_in">NSArray</span>&lt;RACTuple *&gt; *value) &#123;</span><br><span class="line">                <span class="comment">//9</span></span><br><span class="line">                <span class="keyword">return</span> value;</span><br><span class="line">            &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码稍微有点复杂，做的事情是让 FMContact 里面的所有 email 地址，和一个 image 关联在一起，并且保存在服务器端，关键是下面这几个点：</p>
+<ol>
+<li>把 contact.contactItems 里面所有的 email 转换成 signal 的形式发送出来。</li>
+<li>每次 map 的时候，得到一个 email 地址，调用 [[FMAvatarManager shareInstance] rac_setAvatar:emailAddr image:image] 让 email 地址和 image 关联在一起，这个接口也是返回一个 signal，当成功的时候，next 里面发送一个 value (业务中并不关心这个 value 的具体值，只关心是否成功)，如果失败，则会发送一个 error。如果不对 error 做特殊处理，当遇到一次 error 的时候，会使整个 Pipeline error，有些业务需要这种处理 error 的默认方式 (n 个小任务中，任何一个出现 error，整个 Pipeline 都要 error)，但是我们这里的业务，并不想要这种效果，如果一个 email 上的操作失败了，不希望整个 Pipeline 因为这个 error 而结束，而是要其余的 email 地址继续执行各自的小任务，等所有的 email 都处理完毕后，再由 Pipeline 的订阅者一起处理所有的 error，这个时候，就需要用到 catch 操作了。<code>这里有一个槽点，rac_setAvatar 每次都需要传入 image 和 email 地址，然后调用服务器接口进行保存操作，这种方式的接口，不够优雅，对于每一个 email 地址，都要重新发送一遍 image，也有点浪费流量，这是一个历史原因造成的问题。更好的方案是，先把 image 上传到服务器端，然后得到这个 image 对应的一个唯一值，比如 id，然后在这里，只需要让这个 image 的 id 和 email 能够关联起来就行了。不过这并不影响这里 Pipeline 的设计，不管是 image 还是 id，Pipeline 的形状是没有区别的。</code></li>
+<li>在 catch 里面，用新的 signal 替换原有的 signal。因为需要把 error 暂存下来，放到最后再做处理，所以，用 RACTuple 把 error 包装起来并且发送出去。</li>
+<li>虽然目前的业务，并不关心 [[FMAvatarManager shareInstance] rac_setAvatar:emailAddr image:image] 发送的 next 数据，但是，把 next 发送的数据和 error 一起用 RACTuple 包装起来，也是一个合理的设计(万一以后需要用到这个值了呢)，当接收到 next 的时候，error 就是 nil，当发生 error 的时候，相当于 next 就是 nil，所以在这里，返回的是 RACTuplePack(value, nil)，而在前面 3 中，返回的是 RACTuplePack(nil, error)。</li>
+<li>使用 collect 操作。注意，前面 map 操作返回的是一个 signal，signal 的 next 发送的是一个 RACTuple，而 collect 发送的 next 是 NSArray&lt;RACSignal *&gt;。</li>
+<li>前面的 map 已经形成了 signal 的嵌套，而且还通过 collect 把嵌套的 signal 放到了数组里面，所以这里需要先把数组里的 signal 合并成一个，然后再 flatten 出来。zip 操作符合我们的需求。</li>
+<li>这里不像前面的代码演示那样使用 + (instancetype)zip:(id&lt;NSFastEnumeration&gt;)streams reduce:(id (^)())reduceBlock 接口，而是先使用 + (instancetype)zip:(id&lt;NSFastEnumeration&gt;)streams，然后 map，因为前一种 zip，输入参数 streams(数组) 中包含的元素的数量是已知的，所以可以直接在 reduce(变参数方法) 中把所有的参数都罗列出来，我们这里的 Pipeline，arrayOfSignal 里面的元素个数是不固定的，所以只能用原始的 zip 接口，然后在 map 中再进一步处理 zip 发送的 RACTuple。</li>
+<li>在这个 map 里面得到的 RACTuple 是 zip 操作返回的，这个 tuple 里面包含的每一个数据，是前面 4 里面返回的 RACTuple，这里的 RACTuple 里面又包含了 RACTuple，千万不要搞晕了。如果没搞清楚这里的数据到底是怎么来的，可以再倒回去看看前面的步骤。为了方便后续的处理，可以把外层 RACTuple 里面的数据放到一个 NSArray 里面，然后再返回给下一个环节。[tuple allObjects] 就是做的这个动作(其实 RACTuple 的内部，就是用 NSArray 存储的数据)。</li>
+<li>直接把 value 返回，让 Pipeline 的订阅者得到最终的结果。这里没有做任何额外的动作，仅仅是为了说明现在得到的数据是一个 NSArray&lt;RACTuple *&gt;。可以在这里加一些日志，方便调试。不执行这一次 map 操作也是可以的。</li>
+</ol>
+<h3 id="表单页面"><a href="#表单页面" class="headerlink" title="表单页面"></a>表单页面</h3><p>再看另外一个真实业务，如下图：</p>
+<p><img src="/images/edit_contact.png" alt="edit contact"></p>
+<p>这是一个编辑联系人的页面，整体是用 UITableView 实现的，可以动态的增加、删减字段，其中有一个需求，只有当至少有一个字段有数据的时候，右上角的『保存』按钮才可以使用。如果这个页面，不需要动态的增加、删减字段，那这个需求是很容易实现的，如果不使用 UITableView，就算要动态的增加、删减字段，这个需求实现起来也还好，不会很困难。但是现在的问题在于，要在 UITableView 的基础上实现，这就有点复杂了，UITableViewCell 是在复用的，所以不能直接依赖 UITableViewCell 里面的 UITextField 来判断『保存』按钮是否可用，必须严格的使用 MVC 的思路，先把 UI 上所有的操作(增加、删减字段，编辑字段内容)都映射到 model 上，通过 model 再来计算『保存』按钮是否可用。UITableView 的代码，是传统代码和 RAC 混合编写的，RAC 做的事情并不多，主要是把 UITextField 的内容用 signal 发送出来，因为并不复杂(但是也挺繁琐的，产品还提了很多很细节的体验要求)，所以这里不详细讨论，主要还是看一下基于 model 构造的 Pipeline：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="keyword">void</span>)initPipline &#123;</span><br><span class="line">    @weakify(<span class="keyword">self</span>);</span><br><span class="line">    <span class="comment">//1</span></span><br><span class="line">    RACSignal *emailsIsNil = [[RACObserve(<span class="keyword">self</span>.contact, contactItems) <span class="comment">//2</span></span><br><span class="line">                               flattenMap:^<span class="keyword">id</span>(<span class="built_in">NSMutableArray</span> *items) &#123;</span><br><span class="line">                                   <span class="keyword">if</span> (items.count == <span class="number">0</span>) &#123; <span class="comment">//3</span></span><br><span class="line">                                       <span class="keyword">return</span> [RACSignal <span class="keyword">return</span>:[<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>]];</span><br><span class="line">                                   &#125;</span><br><span class="line">                                   </span><br><span class="line">                                   <span class="comment">//4</span></span><br><span class="line">                                   <span class="keyword">return</span> [[[items.rac_sequence.signal</span><br><span class="line">                                             map:^<span class="keyword">id</span>(FMContactItem *item) &#123;</span><br><span class="line">                                                 <span class="keyword">return</span> [[RACObserve(item, email)  <span class="comment">//5</span></span><br><span class="line">                                                          distinctUntilChanged]    <span class="comment">//6</span></span><br><span class="line">                                                         map:^<span class="keyword">id</span>(<span class="built_in">NSString</span> *email) &#123;</span><br><span class="line">                                                             <span class="comment">//7</span></span><br><span class="line">                                                             <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:(email.length == <span class="number">0</span>)];</span><br><span class="line">                                                         &#125;];</span><br><span class="line">                                             &#125;]</span><br><span class="line">                                            collect]  <span class="comment">//8</span></span><br><span class="line">                                           flattenMap:^<span class="keyword">id</span>(<span class="built_in">NSArray</span> *arrayOfBoolSignal) &#123;</span><br><span class="line">                                               <span class="keyword">return</span> [[[RACSignal combineLatest:arrayOfBoolSignal]  <span class="comment">//9</span></span><br><span class="line">                                                        map:^<span class="keyword">id</span>(RACTuple *tuple) &#123;</span><br><span class="line">                                                            <span class="comment">//10</span></span><br><span class="line">                                                            <span class="built_in">BOOL</span> b = <span class="literal">YES</span>;</span><br><span class="line">                                                            <span class="keyword">for</span> (<span class="built_in">NSUInteger</span> i = <span class="number">0</span>; i &lt; tuple.count; i++) &#123;</span><br><span class="line">                                                                <span class="built_in">NSNumber</span> *n = [tuple objectAtIndex:i];</span><br><span class="line">                                                                b = b &amp;&amp; n.boolValue;</span><br><span class="line">                                                            &#125;</span><br><span class="line">                                                            <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:b];</span><br><span class="line">                                                        &#125;]</span><br><span class="line">                                                       distinctUntilChanged];  <span class="comment">//11</span></span><br><span class="line">                                           &#125;];</span><br><span class="line">                               &#125;]</span><br><span class="line">                              distinctUntilChanged];  <span class="comment">//11</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//12</span></span><br><span class="line">    RACSignal *phonesIsNil = [[RACObserve(<span class="keyword">self</span>.contact, telephone)</span><br><span class="line">                               map:^<span class="keyword">id</span>(<span class="built_in">NSMutableArray</span> *phones) &#123;</span><br><span class="line">                                   <span class="keyword">if</span> (phones.count == <span class="number">0</span>) &#123;</span><br><span class="line">                                       <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>];</span><br><span class="line">                                   &#125;</span><br><span class="line">                                   </span><br><span class="line">                                   <span class="keyword">for</span> (<span class="built_in">NSString</span> *phone <span class="keyword">in</span> phones) &#123;</span><br><span class="line">                                       <span class="keyword">if</span> (phone.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                                           <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">NO</span>];</span><br><span class="line">                                       &#125;</span><br><span class="line">                                   &#125;</span><br><span class="line">                                   </span><br><span class="line">                                   <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>];</span><br><span class="line">                               &#125;]</span><br><span class="line">                              distinctUntilChanged];</span><br><span class="line">    </span><br><span class="line">    RACSignal *addressIsNil = [[RACObserve(<span class="keyword">self</span>.contact, familyAddress)</span><br><span class="line">                                map:^<span class="keyword">id</span>(<span class="built_in">NSMutableArray</span> *addrs) &#123;</span><br><span class="line">                                    <span class="keyword">if</span> (addrs.count == <span class="number">0</span>) &#123;</span><br><span class="line">                                        <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>];</span><br><span class="line">                                    &#125;</span><br><span class="line">                                    </span><br><span class="line">                                    <span class="keyword">for</span> (<span class="built_in">NSString</span> *addr <span class="keyword">in</span> addrs) &#123;</span><br><span class="line">                                        <span class="keyword">if</span> (addr.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                                            <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">NO</span>];</span><br><span class="line">                                        &#125;</span><br><span class="line">                                    &#125;</span><br><span class="line">                                    </span><br><span class="line">                                    <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>];</span><br><span class="line">                                &#125;]</span><br><span class="line">                               distinctUntilChanged];</span><br><span class="line">    </span><br><span class="line">    RACSignal *customInfosIsNil = [[RACObserve(<span class="keyword">self</span>.contact, customInformations)</span><br><span class="line">                                    flattenMap:^<span class="keyword">id</span>(<span class="built_in">NSMutableArray</span> *infos) &#123;</span><br><span class="line">                                        <span class="keyword">if</span> (infos.count == <span class="number">0</span>) &#123;</span><br><span class="line">                                            <span class="keyword">return</span> [RACSignal <span class="keyword">return</span>:[<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>]];</span><br><span class="line">                                        &#125;</span><br><span class="line">                                        </span><br><span class="line">                                        <span class="keyword">return</span> [[[infos.rac_sequence.signal</span><br><span class="line">                                                  map:^<span class="keyword">id</span>(FMCustomInformation *info) &#123;</span><br><span class="line">                                                      RACSignal *nameSignal = [[RACObserve(info, name)</span><br><span class="line">                                                                                distinctUntilChanged]</span><br><span class="line">                                                                               map:^<span class="keyword">id</span>(<span class="built_in">NSString</span> *name) &#123;</span><br><span class="line">                                                                                   <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:(name.length == <span class="number">0</span>)];</span><br><span class="line">                                                                               &#125;];</span><br><span class="line">                                                      </span><br><span class="line">                                                      RACSignal *infoSignal = [[RACObserve(info, information)</span><br><span class="line">                                                                                distinctUntilChanged]</span><br><span class="line">                                                                               map:^<span class="keyword">id</span>(<span class="built_in">NSString</span> *i) &#123;</span><br><span class="line">                                                                                   <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:(i.length == <span class="number">0</span>)];</span><br><span class="line">                                                                               &#125;];</span><br><span class="line">                                                      </span><br><span class="line">                                                      <span class="keyword">return</span> [RACSignal combineLatest:@[nameSignal, infoSignal]</span><br><span class="line">                                                                               reduce:(<span class="keyword">id</span>)^<span class="keyword">id</span>(<span class="built_in">NSNumber</span> *name, <span class="built_in">NSNumber</span> *info)&#123;</span><br><span class="line">                                                                                   <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:(name.boolValue &amp;&amp; info.boolValue)];</span><br><span class="line">                                                                               &#125;];</span><br><span class="line">                                                      </span><br><span class="line">                                                  &#125;]</span><br><span class="line">                                                 collect]</span><br><span class="line">                                                flattenMap:^<span class="keyword">id</span>(<span class="built_in">NSArray</span> *arrayOfBoolSignal) &#123;</span><br><span class="line">                                                    <span class="keyword">return</span> [[[RACSignal combineLatest:arrayOfBoolSignal]</span><br><span class="line">                                                             map:^<span class="keyword">id</span>(RACTuple *tuple) &#123;</span><br><span class="line">                                                                 <span class="built_in">BOOL</span> b = <span class="literal">YES</span>;</span><br><span class="line">                                                                 <span class="keyword">for</span> (<span class="built_in">NSUInteger</span> i = <span class="number">0</span>; i &lt; tuple.count; i++) &#123;</span><br><span class="line">                                                                     <span class="built_in">NSNumber</span> *n = [tuple objectAtIndex:i];</span><br><span class="line">                                                                     b = b &amp;&amp; n.boolValue;</span><br><span class="line">                                                                 &#125;</span><br><span class="line">                                                                 <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:b];</span><br><span class="line">                                                             &#125;]</span><br><span class="line">                                                            distinctUntilChanged];</span><br><span class="line">                                                &#125;];</span><br><span class="line">                                    &#125;]</span><br><span class="line">                                   distinctUntilChanged];</span><br><span class="line">    </span><br><span class="line">    RACSignal *nickIsNil = [[RACObserve(<span class="keyword">self</span>.contact, nick)</span><br><span class="line">                             map:^<span class="keyword">id</span>(<span class="built_in">NSString</span> *nick) &#123;</span><br><span class="line">                                 @strongify(<span class="keyword">self</span>);</span><br><span class="line">                                 <span class="keyword">if</span> (<span class="keyword">self</span>.contact.nick == <span class="literal">nil</span> || [<span class="keyword">self</span>.contact.nick isEqualToString:<span class="string">@""</span>] == <span class="literal">YES</span>) &#123;</span><br><span class="line">                                     <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>];</span><br><span class="line">                                 &#125;</span><br><span class="line">                                 <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">NO</span>];</span><br><span class="line">                             &#125;]</span><br><span class="line">                            distinctUntilChanged];</span><br><span class="line">    </span><br><span class="line">    RACSignal *markIsNil = [RACObserve(<span class="keyword">self</span>.contact, mark)</span><br><span class="line">                            map:^<span class="keyword">id</span>(<span class="built_in">NSString</span> *mark) &#123;</span><br><span class="line">                                @strongify(<span class="keyword">self</span>);</span><br><span class="line">                                <span class="keyword">if</span> (<span class="keyword">self</span>.contact.mark == <span class="literal">nil</span> || [<span class="keyword">self</span>.contact.mark isEqualToString:<span class="string">@""</span>] == <span class="literal">YES</span>) &#123;</span><br><span class="line">                                    <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>];</span><br><span class="line">                                &#125;</span><br><span class="line">                                <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">NO</span>];</span><br><span class="line">                            &#125;];</span><br><span class="line">    </span><br><span class="line">    RACSignal *birthdayIsNil = [RACObserve(<span class="keyword">self</span>.contact, birthday)</span><br><span class="line">                                map:^<span class="keyword">id</span>(<span class="built_in">NSString</span> *birthday) &#123;</span><br><span class="line">                                    @strongify(<span class="keyword">self</span>);</span><br><span class="line">                                    <span class="keyword">if</span> (<span class="keyword">self</span>.contact.birthday == <span class="literal">nil</span> || [<span class="keyword">self</span>.contact.birthday isEqualToString:<span class="string">@""</span>] == <span class="literal">YES</span>) &#123;</span><br><span class="line">                                        <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>];</span><br><span class="line">                                    &#125;</span><br><span class="line">                                    <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">NO</span>];</span><br><span class="line">                                &#125;];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//13</span></span><br><span class="line">    <span class="built_in">NSArray</span> *allSignal = @[nickIsNil, emailsIsNil, markIsNil, phonesIsNil, addressIsNil, birthdayIsNil, customInfosIsNil];</span><br><span class="line">    <span class="keyword">self</span>.contactHasNoPros = [[[[RACSignal combineLatest:allSignal]  <span class="comment">//13</span></span><br><span class="line">                               map:^<span class="keyword">id</span>(RACTuple *tuple) &#123;</span><br><span class="line">                                   <span class="comment">//14</span></span><br><span class="line">                                   <span class="built_in">BOOL</span> b = <span class="literal">YES</span>;</span><br><span class="line">                                   <span class="keyword">for</span> (<span class="built_in">NSUInteger</span> i = <span class="number">0</span>; i &lt; tuple.count; i++) &#123;</span><br><span class="line">                                       <span class="built_in">NSNumber</span> *n = [tuple objectAtIndex:i];</span><br><span class="line">                                       b = b &amp;&amp; n.boolValue;</span><br><span class="line">                                   &#125;</span><br><span class="line">                                   <span class="keyword">return</span> [<span class="built_in">NSNumber</span> numberWithBool:b];</span><br><span class="line">                               &#125;]</span><br><span class="line">                              distinctUntilChanged]</span><br><span class="line">                             deliverOnMainThread];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这部分代码有点长，不过不用恐惧，中间有很大一部分代码都是做的类似事情，只需要看其中的一个就行，以 email 字段为例子：</p>
+<p><img src="/images/edit_email.png" alt="edit contact"></p>
+<ol>
+<li>联系人的字段，被划分为了好几个部分，比如 email 数组、电话号码数组、备注信息字段等等，每一部分的处理逻辑都是类似的，主要看一下 email 相关的部分。</li>
+<li>当添加或删除 email 的时候，UITableView 部分的代码，已经在 FMContact.contactItems 数组上做了对应的动作，这里通过 RACObserve 对这个 model 进行 KVO，就可以获取到 FMContactItem 的数组。</li>
+<li>如果用户删除了所有的 email 地址(FMContactItem 数组的元素个数为 0)，emailsIsNil 就应该为 YES，说明当前输入的 email 是没有值的。</li>
+<li>如果 FMContactItem 数组的元素个数不为 0，则把这个数组里面的 FMContactItem 转换成 signal 的形式发送出去。</li>
+<li>UI 模块会实时的更新 FMContactItem.email 字段，所以这里也是使用 RACObserve 监听 email 字段的值。</li>
+<li><a href="http://rxmarbles.com/#distinctUntilChanged" target="_blank" rel="external">distinctUntilChanged</a> 操作相当于一种过滤，只有当这一次 next 发送的数据和前一次 next 发送的数据不一样的时候，才会把这次 next 发送的数据继续往后续环节传递。</li>
+<li>拿到一个 email 地址的时候，只要这个 email 的长度大于 0，就认为这个字段是有值的(并没有进行 email 有效性检查，即便输入的 email 不合理，『保存』按钮仍然可用，只有点击『保存』按钮的时候，才会检查 email 是否合理有效，产品需求是设计成这样的)。</li>
+<li>使用 collect。注意前面 5 所在的 map 操作，返回的是 signal，所以这里形成了 signal 的嵌套，然后 collect 又会把这些 signal 全部放到一个数组里面。</li>
+<li>拿到 signal 的数组后，要把这些 signal 合并成一个，combineLatest 满足这里的需求。</li>
+<li>这里实现具体的产品需求，比如现在有 n 个 email 的输入框，当所有的输入框都没有输入内容的时候，才认为 email 是没有值的，只要有任何一个 email 输入框有内容，都认为 email 是有值的。</li>
+<li>这几个地方使用 distinctUntilChanged，都是为了避免不必要的 signal 数据传递。</li>
+<li>这里好几个 signal，都是类似的思考思路和实现方式。</li>
+<li>把不同的 *IsNil signal 放到一个数组里，用 combineLatest 把它们合并成一个。</li>
+<li>和 10 类似，实现产品约定好的需求，当所有输入框都没有内容的时候，这个联系人就是没有值的(通过 self.contactHasNoPros 这个 signal 来传递这个 Bool 值)。</li>
+</ol>
+<p>上面这段代码，最终实现出了一个 signal，就是 contactHasNoPros，这个 signal 的订阅者，根据 next 发送的 Bool 值，设置 button 的状态就可以了，代码片段如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">@weakify(<span class="keyword">self</span>);</span><br><span class="line">[[<span class="keyword">self</span>.contactEditView.contactHasNoPros</span><br><span class="line">      not] <span class="comment">//1</span></span><br><span class="line">     subscribeNext:^(<span class="built_in">NSNumber</span> *x) &#123;</span><br><span class="line">         @strongify(<span class="keyword">self</span>);</span><br><span class="line">         <span class="keyword">self</span>.navigationItem.rightBarButtonItem.enabled = x.boolValue;</span><br><span class="line">     &#125;];</span><br></pre></td></tr></table></figure>
+<p>因为 contactHasNoPros 发送 YES 的时候，表达的含义是联系人所有的字段都没有值，没有值的时候，『保存』按钮应该是不可用状态，所以这里用 not 操作先做一个 Bool 值的取反，然后再设置 button 的 enabled 状态。</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/FRP/" rel="tag">#FRP</a>
+          
+            <a href="/tags/ReactiveCocoa/" rel="tag">#ReactiveCocoa</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/26/The-Power-Of-Composition-In-FRP-Part-2/" rel="next" title="用 ReactiveCocoa 事半功倍的写代码（二）">
+                <i class="fa fa-chevron-left"></i> 用 ReactiveCocoa 事半功倍的写代码（二）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/05/03/The-Power-Of-Composition-In-FRP-Part-4/" rel="prev" title="用 ReactiveCocoa 事半功倍的写代码（四）">
+                用 ReactiveCocoa 事半功倍的写代码（四） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="QQ邮箱iOS开发组" />
+          <p class="site-author-name" itemprop="name">QQ邮箱iOS开发组</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-name">博客</span>
+            </a>
+          </div>
+          
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#collect-combineLatest-或者-zip"><span class="nav-number">1.</span> <span class="nav-text">collect + combineLatest 或者 zip</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#版本-1"><span class="nav-number">1.1.</span> <span class="nav-text">版本 1</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版本-2"><span class="nav-number">1.2.</span> <span class="nav-text">版本 2</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#版本-3"><span class="nav-number">1.3.</span> <span class="nav-text">版本 3</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#保存联系人的头像"><span class="nav-number">2.</span> <span class="nav-text">保存联系人的头像</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#表单页面"><span class="nav-number">3.</span> <span class="nav-text">表单页面</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">QQ邮箱iOS开发组</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  
+
+
+  
+
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.scheme !== 'Pisces' && (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always')) {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'iosqqmail';
+      var disqus_identifier = '2016/04/28/The-Power-Of-Composition-In-FRP-Part-3/';
+      var disqus_title = '用 ReactiveCocoa 事半功倍的写代码（三）';
+      var disqus_url = 'http://iosqqmail.github.io/2016/04/28/The-Power-Of-Composition-In-FRP-Part-3/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+  
+  
+
+  
+  
+
+
+</body>
+</html>

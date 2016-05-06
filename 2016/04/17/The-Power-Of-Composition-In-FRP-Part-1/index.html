@@ -1,0 +1,791 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="FRP,ReactiveCocoa," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="前言FRP 是一门学习曲线比较陡峭的技术，回想自己以前的学习过程，也是反反复复好几次，而且总是挫败感很强。不过还好坚持了下来，现在也算是用着比较顺手了。
+关于 FRP， 最容易被吐槽的地方就是没有好的学习资料和文档。一开始我也是这种感觉，后来在反复尝试的过程中，发现其实真的不是文档的问题。先说我的结论 —- 不要指望脱离代码能够把 FRP 的原理讲清楚，这是 FRP 和其他编程技术的一个明显差异，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 ReactiveCocoa 事半功倍的写代码（一）">
+<meta property="og:url" content="http://iosqqmail.github.io/2016/04/17/The-Power-Of-Composition-In-FRP-Part-1/index.html">
+<meta property="og:site_name" content="QQ邮箱的技术博客">
+<meta property="og:description" content="前言FRP 是一门学习曲线比较陡峭的技术，回想自己以前的学习过程，也是反反复复好几次，而且总是挫败感很强。不过还好坚持了下来，现在也算是用着比较顺手了。
+关于 FRP， 最容易被吐槽的地方就是没有好的学习资料和文档。一开始我也是这种感觉，后来在反复尝试的过程中，发现其实真的不是文档的问题。先说我的结论 —- 不要指望脱离代码能够把 FRP 的原理讲清楚，这是 FRP 和其他编程技术的一个明显差异，">
+<meta property="og:image" content="http://iosqqmail.github.io/images/retryButton.png">
+<meta property="og:updated_time" content="2016-05-06T04:57:34.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="用 ReactiveCocoa 事半功倍的写代码（一）">
+<meta name="twitter:description" content="前言FRP 是一门学习曲线比较陡峭的技术，回想自己以前的学习过程，也是反反复复好几次，而且总是挫败感很强。不过还好坚持了下来，现在也算是用着比较顺手了。
+关于 FRP， 最容易被吐槽的地方就是没有好的学习资料和文档。一开始我也是这种感觉，后来在反复尝试的过程中，发现其实真的不是文档的问题。先说我的结论 —- 不要指望脱离代码能够把 FRP 的原理讲清楚，这是 FRP 和其他编程技术的一个明显差异，">
+<meta name="twitter:image" content="http://iosqqmail.github.io/images/retryButton.png">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"hide"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 用 ReactiveCocoa 事半功倍的写代码（一） | QQ邮箱的技术博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74497486-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">QQ邮箱的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            博文
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+      
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                用 ReactiveCocoa 事半功倍的写代码（一）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">jasonjfeng(冯牮) 发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-17T21:25:59+08:00" content="2016-04-17">
+              2016-04-17
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/17/The-Power-Of-Composition-In-FRP-Part-1/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/04/17/The-Power-Of-Composition-In-FRP-Part-1/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p><a href="https://en.wikipedia.org/wiki/Functional_reactive_programming" target="_blank" rel="external">FRP</a> 是一门学习曲线比较陡峭的技术，回想自己以前的学习过程，也是反反复复好几次，而且总是挫败感很强。不过还好坚持了下来，现在也算是用着比较顺手了。</p>
+<p>关于 FRP， 最容易被吐槽的地方就是没有好的学习资料和文档。一开始我也是这种感觉，后来在反复尝试的过程中，发现其实真的不是文档的问题。先说我的结论 —- 不要指望脱离代码能够把 FRP 的原理讲清楚，这是 FRP 和其他编程技术的一个明显差异，这就类似于很难用一段文字把一个数学公式描述清楚一样。而且，即便是开始看用 FRP 编写的各种代码了，还是会觉得太抽象了，仍然需要大量的时间体会代码，或者说，『悟』出其中的一些基本门道。</p>
+<p>关于入门学习，没有捷径，最好的办法就是通过代码来学习，下面是我觉得比较好的一些入门学习资料</p>
+<ul>
+<li><a href="https://gist.github.com/staltz/868e7e9bc2a7b8c1f754" target="_blank" rel="external">The introduction to Reactive Programming you’ve been missing</a></li>
+<li><a href="https://github.com/ReactiveCocoa/ReactiveCocoa/tree/master/Documentation" target="_blank" rel="external">ReactiveCocoa Documentation</a> <em>我本人主要是做 iOS 开发，目前使用的是 RAC 这个库，所以它的官方文档也是一个学习途径。另外，本文中的代码也是使用 RAC 进行编写</em></li>
+<li><a href="https://www.raywenderlich.com/62699/reactivecocoa-tutorial-pt1" target="_blank" rel="external">ReactiveCocoa Tutorial – The Definitive Introduction: Part 1/2</a></li>
+<li><a href="https://www.raywenderlich.com/62796/reactivecocoa-tutorial-pt2" target="_blank" rel="external">ReactiveCocoa Tutorial – The Definitive Introduction: Part 2/2</a></li>
+<li><a href="http://rxmarbles.com/" target="_blank" rel="external">Interactive diagrams of Rx Observables</a> <em>这个是一组动态效果图，用可视化的效果演示了一些 FRP 里常用操作(当然，其实还是很抽象的)</em></li>
+</ul>
+<p>之所以说 FRP 的学习曲线很陡峭，不仅仅是指它的入门学习比较耗时费脑，当入了门或者稍微找到一些感觉之后，紧接着就会面对第二个问题：FRP 里面提供的都是一些比较抽象的函数操作，怎样才能用这些基本函数来解决各种各样的业务问题？尤其是那些很抽象的操作，怎样才能用起来？</p>
+<p>这个系列的文章，主要就是针对后面这第二个问题，做的一些 demo 演示。</p>
+<p>可以把 FRP 看成是一种更高级的 <a href="http://www.dossier-andreas.net/software_architecture/pipe_and_filter.html" target="_blank" rel="external">Pipeline</a> 编程范式，Pipeline 的一个精髓，就是可以灵活的组合，虽然 FRP 里常用的操作也就那么几十个，但是一旦像搭积木那样对它们进行了组装之后，FRP 的强大之处一下子就展现了出来。</p>
+<p>FRP 通常是以库或框架的形式提供给使用者，目前已经有很多常见编程语言的具体实现。在这个系列文章中，将使用 RAC 2 (ReactiveCocoa 的 Objective-C 版本) 进行编写。但是 FRP 本质上是一种编程范式，从 Pipeline 的角度来看，它的侧重点在于如何组装出不同形状的 Pipeline，而不太在乎 Pipeline 的具体构成材料(编程语言)，从框架的角度来看，虽然有不同语言版本的实现，但是每个版本里，提供的诸如 map、flattenMap、reduce 等基础操作，在概念上和行为模式上，又都是一样的。所以，FRP 也是一门 “Learn once, write anywhere” 的技术。</p>
+<p>FRP 有几个明显的好处，比如可以减少中间状态变量的使用，可以编写紧凑的代码，可以用同步风格编写异步运行的代码，在本系列文章中，也会尽量体现出这些特点。</p>
+<a id="more"></a>
+<h3 id="处理键盘的弹出和隐藏"><a href="#处理键盘的弹出和隐藏" class="headerlink" title="处理键盘的弹出和隐藏"></a>处理键盘的弹出和隐藏</h3><p>这个业务其实是非常简单的，就是在某个 UIViewController 里面，当检测到键盘弹出的时候，为了避免键盘遮挡住某个 UIView，需要根据键盘的高度重新对 view 进行 layout，用 RAC 写出来的代码是下面这个样子：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1</span></span><br><span class="line">- (<span class="keyword">void</span>)initPipeline &#123;</span><br><span class="line">    @weakify(<span class="keyword">self</span>);</span><br><span class="line">    RACSignal *keyboardWillShowNotification =</span><br><span class="line">    [[<span class="built_in">NSNotificationCenter</span>.defaultCenter rac_addObserverForName:<span class="built_in">UIKeyboardWillShowNotification</span> object:<span class="literal">nil</span>]</span><br><span class="line">     map:^<span class="keyword">id</span>(<span class="built_in">NSNotification</span> *notification) &#123;</span><br><span class="line">         <span class="comment">//2</span></span><br><span class="line">         <span class="built_in">NSDictionary</span>* userInfo = [notification userInfo];</span><br><span class="line">         <span class="built_in">NSValue</span>* aValue = [userInfo objectForKey:<span class="built_in">UIKeyboardFrameEndUserInfoKey</span>];</span><br><span class="line">         <span class="keyword">return</span> aValue;</span><br><span class="line">     &#125;];</span><br><span class="line">    </span><br><span class="line">    [[[[[<span class="built_in">NSNotificationCenter</span>.defaultCenter rac_addObserverForName:<span class="built_in">UIKeyboardWillHideNotification</span> object:<span class="literal">nil</span>]</span><br><span class="line">        map:^<span class="keyword">id</span>(<span class="built_in">NSNotification</span> *notification) &#123;</span><br><span class="line">            <span class="comment">//3</span></span><br><span class="line">            <span class="keyword">return</span> [<span class="built_in">NSValue</span> valueWith<span class="built_in">CGRect</span>:<span class="built_in">CGRectZero</span>];</span><br><span class="line">        &#125;]</span><br><span class="line">       merge:keyboardWillShowNotification]   <span class="comment">//4</span></span><br><span class="line">      takeUntil:<span class="keyword">self</span>.rac_willDeallocSignal]  <span class="comment">//6</span></span><br><span class="line">     subscribeNext:^(<span class="built_in">NSValue</span> *value) &#123;</span><br><span class="line">         <span class="built_in">NSLog</span>(<span class="string">@"Keyboard size is: %@"</span>, value);</span><br><span class="line">         <span class="comment">//5</span></span><br><span class="line">         @strongify(<span class="keyword">self</span>);</span><br><span class="line">         <span class="keyword">self</span>.messageEditViewContainerViewBottomConstraint.constant = <span class="number">5.0</span> + [value <span class="built_in">CGRectValue</span>].size.height;</span><br><span class="line">         </span><br><span class="line">         [<span class="keyword">self</span>.view updateConstraints];</span><br><span class="line">         [<span class="built_in">UIView</span> animateWithDuration:<span class="number">0.6</span> animations:^&#123;</span><br><span class="line">             @strongify(<span class="keyword">self</span>);</span><br><span class="line">             [<span class="keyword">self</span>.view layoutIfNeeded];</span><br><span class="line">         &#125;];</span><br><span class="line">     &#125; completed:^&#123;</span><br><span class="line">         <span class="comment">//6</span></span><br><span class="line">         <span class="built_in">NSLog</span>(<span class="string">@"%s, Keyboard Notification signal completed"</span>, __PRETTY_FUNCTION__);</span><br><span class="line">     &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>用数字标注的地方，是比较关键的点：</p>
+<ol>
+<li>很多时候，Pipeline 都是只需要构建一次的，如果是针对 UIViewController，通常都是在 viewDidLoad 方法里调用 [self initPipeline]，如果是针对 UIView，则很有可能是在 awakeFromNib 方法里进行调用，这里遵循的一个策略是，在模块『活』起来之后，应该尽快的构造所有的 Pipeline，如果是 model 或 service 类型的模块，则很可能是在 init 完成后，就调用 initPipeline，但是对于 UI 性质的模块，因为有 iOS 平台相关的 view 加载策略，而且 Pipeline 通常又是和 UI 交互有关，所以通常是需要在 view 生命期相关的方法中才构造 Pipeline。</li>
+<li>通过 map 操作，把 UIKeyboardWillShowNotification 转换成一个 CGRect(包装在 NSValue 里面)。<a href="http://rxmarbles.com/#map" target="_blank" rel="external">map</a> 操作是 FRP 里面最核心的一个基本操作，也是最体现函数式编程(FP)哲学的一个操作，所谓的这个哲学，用通俗的话来描述，就是『把复杂的业务拆分成一个一个的<strong>小任务</strong>，每一个小任务，都需要一个输入值，并且会给出一个输出值(当然也会反馈错误信息)，而且每个小任务都只专心的做一件事情』。如果第一个小任务的输出值，是第二个小任务的输入值，那么，就可以用 map 操作把这两个小任务串联在一起。在接收到 UIKeyboardWillShowNotification 消息通知的时候，这个小任务的输入值就是 NSNotification，输出值是键盘尺寸对应的 CGRect，小任务本身做的事情，就是从 NSNotification 里面取出包装着这个 CGRect 的 NSValue。</li>
+<li>当接收到 UIKeyboardWillHideNotification 消息通知的时候，这个小任务要做的事情，和 2 里面的小任务是类似的，只不过这一次，NSNotification 并没有包含键盘的尺寸，那我们自己用 CGRectZero 构造一个就行了。</li>
+<li>终于到了这段代码的重点了，<a href="http://rxmarbles.com/#merge" target="_blank" rel="external">merge</a> 操作在这里的使用效果，相当于把 2 和 3 里面的两个小任务的输出值作为自己的输入值，按照时间先后顺序排列起来，然后作为自己这个小任务的输出值，返回给 Pipeline 中的下一个环节。<code>这样描述还是很抽象，看不懂，是吧？没关系，早就说过用语言很难描述了。把代码运行起来，通过 NSLog(@&quot;Keyboard size is: %@&quot;, value) 这句代码的输出信息体会一下 merge 的实际效果。</code></li>
+<li>这里才是真正的实现业务想要的效果，根据前一个小任务的输出值(键盘尺寸 CGRect)来计算 layout 的尺寸。</li>
+<li><a href="http://rxmarbles.com/#takeUntil" target="_blank" rel="external">takeUntil</a> 是一个难点，如果没有这一句代码调用，运行代码后会发现，前面 5 里面的业务还是正常执行了，但是当 self 被 dealloc 后(比如 pop UIViewController 后)，NSLog(@”Keyboard size is: %@”, value) 这句代码还是会被执行到(因为已经处理过 retain cycle，所以此时 self 是 nil)，这是因为当 self 被 dealloc 后，这个 Pipeline 并没有被释放，Pipeline 里面还是有数据在继续流动。这个话题牵扯到 RAC 框架中的<a href="https://github.com/ReactiveCocoa/ReactiveCocoa/blob/master/Documentation/Legacy/MemoryManagement.md" target="_blank" rel="external">内存管理策略</a>，很重要，后面的内容中还会讲到这个话题。这里暂时只需要知道可以借助 takeUntil:self.rac_willDeallocSignal 这样的一行代码方便的解决问题就行了。</li>
+</ol>
+<h3 id="Singal上的-next、complete、error"><a href="#Singal上的-next、complete、error" class="headerlink" title="Singal上的 next、complete、error"></a>Singal上的 next、complete、error</h3><p>在学习的过程中，发现有一个问题很容易被忽略掉，那就是 Signal 的 next、complete、error 这 3 种数据，会在什么时候被发送出来，针对这个问题做过一个总结，放在了 <a href="https://github.com/ziipin-code/ZiipinTemplateProject/blob/master/rac.md" target="_blank" rel="external">这篇文档</a> 中，主要目的是使用一种简单易懂的格式把 Signal 的关键信息描述出来，这里简单摘录一下。</p>
+<h4 id="基础格式"><a href="#基础格式" class="headerlink" title="基础格式"></a>基础格式</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HotSignal&lt;T, E&gt;   // or ColdSignal&lt;T, E&gt;</span><br><span class="line">Completion: ...</span><br><span class="line">Error: ...</span><br><span class="line">Scheduler: ...</span><br><span class="line">Multicast: ...</span><br></pre></td></tr></table></figure>
+<h4 id="关键字解释"><a href="#关键字解释" class="headerlink" title="关键字解释"></a>关键字解释</h4><ul>
+<li><a href="https://github.com/ReactiveCocoa/ReactiveCocoa/blob/master/Documentation/Legacy/DesignGuidelines.md#use-descriptive-declarations-for-methods-and-properties-that-return-a-signal" target="_blank" rel="external">HotSignal And ColdSignal</a>:<ul>
+<li><code>HotSignal</code>: Signal 已经处于活动状态(activated);</li>
+<li><code>ColdSignal</code>: Signal 需要订阅(subscribed)才会活动(activate);</li>
+</ul>
+</li>
+<li>T: Signal sendNext 的类型, 可以下面几种情况:<ul>
+<li><code>T</code>: 表示只会发送 1 次 next 事件, 内容是类型 <code>T</code> 的实例;</li>
+<li><code>T?</code>:  表示只会发送 1 次 next 事件, 内容是类型 <code>T</code> 的实例或者 <code>nil</code>;</li>
+<li><code>[T]</code>: 表示会发送 0 到 n 次 next 事件, 内容是类型 <code>T</code> 的实例;</li>
+<li><code>[T?]</code>: 表示会发送 0 到 n 次 next 事件, 内容是类型 <code>T</code> 的实例或者 <code>nil</code>;</li>
+<li><code>None</code>: 表示<strong>不会</strong>发送 next 事件;</li>
+</ul>
+</li>
+<li>E: Signal sendError 的类型, 通常是 <code>NSError</code> 或 <code>NoError</code>; <code>NoError</code> 表示 Signal 不会 sendError;</li>
+<li>Completion: 描述什么情况 sendCompleted;<ul>
+<li>如果 next 事件的发送次数是 <code>无穷多次</code>，相当于使用者永远也接收不到 Completed 事件，所以这一行可以不写;</li>
+</ul>
+</li>
+<li>Error:  描述什么情况 sendError;<br>如果 Signal 不会 sendError, 这一行可以不写;</li>
+<li>Scheduler: Signal 所在的线程，通常是 <code>main</code> <code>specified</code> <code>current</code>, 默认是 <code>current</code><ul>
+<li>main 模块内部的pipeline有切换不同的scheduler，所以模块内部有责任确保最终的signal始终是在main schedular上的</li>
+<li>specified 模块内部自定义了一个任务队列，模块会确保最终返回的signal都在这个特定的schedular中(或者是使用全局默认的后台schedular)</li>
+<li>current 模块内部pipeline没有做任何scheduler的切换，且不指定特定的schedular，所以最终返回的signal和外部调用者的线程保持一致</li>
+</ul>
+</li>
+<li>Multicast: 是否广播，通常是 <code>YES</code> <code>NO</code>, 默认是 <code>NO</code></li>
+</ul>
+<h4 id="所有可能出现的有意义的非嵌套-Signal"><a href="#所有可能出现的有意义的非嵌套-Signal" class="headerlink" title="所有可能出现的有意义的非嵌套 Signal"></a>所有可能出现的有意义的非嵌套 Signal</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">*    HotSignal&lt;T, NoError&gt;</span><br><span class="line">*    HotSignal&lt;T?, NoError&gt;</span><br><span class="line">*    HotSignal&lt;[T], NoError&gt;</span><br><span class="line">*    HotSignal&lt;[T?], NoError&gt;</span><br><span class="line">*    HotSignal&lt;None, NoError&gt;</span><br><span class="line">*    HotSignal&lt;T, NSError&gt;</span><br><span class="line">*    HotSignal&lt;T?, NSError&gt;</span><br><span class="line">*    HotSignal&lt;[T], NSError&gt;</span><br><span class="line">*    HotSignal&lt;[T?], NSError&gt;</span><br><span class="line">*    HotSignal&lt;None, NSError&gt;</span><br><span class="line"></span><br><span class="line">*    ColdSignal&lt;T, NoError&gt;</span><br><span class="line">*    ColdSignal&lt;T?, NoError&gt;</span><br><span class="line">*    ColdSignal&lt;[T], NoError&gt;</span><br><span class="line">*    ColdSignal&lt;[T?], NoError&gt;</span><br><span class="line">*    ColdSignal&lt;None, NoError&gt;</span><br><span class="line">*    ColdSignal&lt;T, NSError&gt;</span><br><span class="line">*    ColdSignal&lt;T?, NSError&gt;</span><br><span class="line">*    ColdSignal&lt;[T], NSError&gt;</span><br><span class="line">*    ColdSignal&lt;[T?], NSError&gt;</span><br><span class="line">*    ColdSignal&lt;None, NSError&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="发送验证码的倒计时按钮"><a href="#发送验证码的倒计时按钮" class="headerlink" title="发送验证码的倒计时按钮"></a>发送验证码的倒计时按钮</h3><p><img src="/images/retryButton.png" alt="Retry Button"></p>
+<p>如上图，这里的需求是，点击右上角的按钮后，该按钮不可以使用，同时在按钮上显示一个倒计时时间，当达到倒计时时间后，按钮恢复可用状态。这个需求并不难，相信大家都可以写出来，但是，每个人写出来的代码，风格肯定千差万别，而且，免不了会需要一些状态变量来记录一些信息，比如定时器对象和倒计时的时间等等。如果换用 RAC，则可以在一段连续的代码中，满足所有的需求，代码如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1</span></span><br><span class="line"><span class="comment">/*</span><br><span class="line"> ColdSignal&lt;RACTuple&lt;NSString, NSNumber&lt;BOOL&gt; &gt;), NoError&gt;</span><br><span class="line"> Completion: 1分钟倒计时结束;</span><br><span class="line"> Error: none;</span><br><span class="line"> Scheduler: main;</span><br><span class="line"> Multicast: NO;</span><br><span class="line"> */</span></span><br><span class="line">- (RACSignal *)retryButtonTitleAndEnable &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">const</span> <span class="built_in">NSInteger</span> n = <span class="number">60</span>;</span><br><span class="line">    </span><br><span class="line">    RACSignal *timer = [[[RACSignal interval:<span class="number">1</span> onScheduler:[RACScheduler mainThreadScheduler]]  <span class="comment">//7</span></span><br><span class="line">                         map:^<span class="keyword">id</span>(<span class="keyword">id</span> value) &#123;</span><br><span class="line">                             <span class="keyword">return</span> <span class="literal">nil</span>; <span class="comment">//8</span></span><br><span class="line">                         &#125;]</span><br><span class="line">                        startWith:<span class="literal">nil</span>]; <span class="comment">//9</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">//10</span></span><br><span class="line">    <span class="built_in">NSMutableArray</span> *numbers = [[<span class="built_in">NSMutableArray</span> alloc] init];</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">NSInteger</span> i = n; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        [numbers addObject:[<span class="built_in">NSNumber</span> numberWithInteger:i]];</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [[[[[numbers.rac_sequence.signal zipWith:timer]  <span class="comment">//11</span></span><br><span class="line">               map:^<span class="keyword">id</span>(RACTuple *tuple) &#123;</span><br><span class="line">                   <span class="comment">//12</span></span><br><span class="line">                   <span class="built_in">NSNumber</span> *number = tuple.first;</span><br><span class="line">                   <span class="built_in">NSInteger</span> count = number.integerValue;</span><br><span class="line">                   </span><br><span class="line">                   <span class="keyword">if</span> (count == <span class="number">0</span>) &#123;</span><br><span class="line">                       <span class="keyword">return</span> RACTuplePack(<span class="string">@"重试"</span>, [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">YES</span>]);</span><br><span class="line">                   &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                       <span class="built_in">NSString</span> *title = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"重试(%lds)"</span>, (<span class="keyword">long</span>)count];</span><br><span class="line">                       <span class="keyword">return</span> RACTuplePack(title, [<span class="built_in">NSNumber</span> numberWithBool:<span class="literal">NO</span>]);</span><br><span class="line">                   &#125;</span><br><span class="line">               &#125;]</span><br><span class="line">              takeUntil:[<span class="keyword">self</span> rac_willDeallocSignal]] <span class="comment">//13</span></span><br><span class="line">             setNameWithFormat:<span class="string">@"%s, retryButtonTitleAndEnable signal"</span>, __PRETTY_FUNCTION__]</span><br><span class="line">            logCompleted]; <span class="comment">//14</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)initPipeline &#123;</span><br><span class="line">    @weakify(<span class="keyword">self</span>);</span><br><span class="line">    [[[[[[<span class="keyword">self</span>.retryButtton rac_signalForControlEvents:<span class="built_in">UIControlEventTouchUpInside</span>]</span><br><span class="line">         map:^<span class="keyword">id</span>(<span class="keyword">id</span> value) &#123;</span><br><span class="line">             <span class="comment">//2</span></span><br><span class="line">             @strongify(<span class="keyword">self</span>);</span><br><span class="line">             <span class="keyword">return</span> [<span class="keyword">self</span> retryButtonTitleAndEnable];</span><br><span class="line">         &#125;]</span><br><span class="line">        startWith:[<span class="keyword">self</span> retryButtonTitleAndEnable]]  <span class="comment">//3</span></span><br><span class="line">       switchToLatest]  <span class="comment">//4</span></span><br><span class="line">      takeUntil:[<span class="keyword">self</span> rac_willDeallocSignal]]  <span class="comment">//5</span></span><br><span class="line">     subscribeNext:^(RACTuple *tuple) &#123;</span><br><span class="line">         <span class="comment">//6</span></span><br><span class="line">         @strongify(<span class="keyword">self</span>);</span><br><span class="line">         <span class="built_in">NSString</span> *title = tuple.first;</span><br><span class="line">         [<span class="keyword">self</span>.retryButtton setTitle:title forState:<span class="built_in">UIControlStateNormal</span>];</span><br><span class="line">         <span class="keyword">self</span>.retryButtton.enabled = ((<span class="built_in">NSNumber</span> *)tuple.second).boolValue;</span><br><span class="line">     &#125; completed:^&#123;</span><br><span class="line">         <span class="comment">//5</span></span><br><span class="line">         <span class="built_in">NSLog</span>(<span class="string">@"%s, pipeline completed"</span>, __PRETTY_FUNCTION__);</span><br><span class="line">     &#125;];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">//这里省略了点击 retryButtton 后具体要做的业务逻辑，同时也省略了验证按钮和验证码输入框的处理逻辑</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对关键代码的描述如下：</p>
+<ol>
+<li>设计一个 RACSignal，这个 Signal 每次发送的 Next 数据里面包含的就是按钮上要显示的文本信息和按钮的可用状态。从模块的角度来看，这个 Signal 的内部细节(倒计时逻辑)，外部使用者是不需要知道的，所以后面我们会先看外层 Pipeline 的实现代码，然后再倒回来看这个 Signal 的内部逻辑。</li>
+<li>每当 retryButtton 被点击的时候，要重新启动一个定时器，所以在这个 map 操作里面，调用 [self retryButtonTitleAndEnable] 得到一个 Signal，将这个 Signal 作为这个小任务的输出值。注意，因为这里 map 操作返回的是一个 Signal，形成了一个 Pipeline 的嵌套，所以可以预见到，在外层 Pipeline 的后续操作中，肯定是需要把这个内嵌的 Pipeline flatten 出来的。</li>
+<li>在业务需求中，点击这个 retryButtton 后，要请求服务器发送一个验证码(省略了这部分的代码，如果要用 RAC 实现的话，是比较容易的)，同时，当每次进入这个 UI 页面的时候，不需要用户主动点击这个 retryButtton 按钮，首先就要自动的请求服务器发送一个验证码，这种情况下，也要求 retryButtton 开始进入倒计时的模式，所以，用 <a href="http://rxmarbles.com/#startWith" target="_blank" rel="external">startWith</a> 操作，在外层 Pipeline 中先插入第一个 Next 数据，因为是同样的倒计时逻辑，所以这里也是调用 [self retryButtonTitleAndEnable] 得到内嵌的 Pipeline。</li>
+<li>前面已经提过了，既然形成了 Pipeline 的嵌套，那肯定是要把这种嵌套解出来的，这里使用 <a href="http://reactivex.io/documentation/operators/images/switch.c.png" target="_blank" rel="external">switchToLatest</a> 更合适。要注意区分一下和 <a href="http://reactivex.io/documentation/operators/flatmap.html" target="_blank" rel="external">flattenMap</a> 的差异。</li>
+<li>Pipeline 的生命期控制，前面的例子中已经讲过这种技巧了，但是，这是写上这句，只是一个双保险。复杂的地方在于外层 Pipeline 有 switchToLatest 操作，这个 switchToLatest 后的 Signal 什么时候才会 Completed，请继续看至后面 13 中的解释。</li>
+<li>这里是更新 retryButtton 的 title 和状态。</li>
+<li>现在开始回到内层 Pipeline 的逻辑中去。用 Pipeline 的方式实现一个定时器，借助 RAC 提供的 interval 操作就行。每隔一秒都会在主线程上发送一个 Next。</li>
+<li>7 里面的定时器上的 Next 数据，是当前的系统时间值，我们的需求里面并不需要这个时间值，所以这里直接 map 成 nil。</li>
+<li>RACSignal interval 要隔一秒后才会发出第一次，需要用 startWith 立刻发送一个，代表倒计时的初始值。</li>
+<li>把倒计时要用到的数字放到一个数组里面，然后通过 numbers.rac_sequence.signal 语句转换成一个 Signal。</li>
+<li>把前面 10 中得到的 Signal 和 9 中得到的 timer Signal，用 <a href="http://rxmarbles.com/#zip" target="_blank" rel="external">zipWith</a> 组装起来。注意一点，这个通过 zipWith 组装出来的 Signal，会在 numbers.rac_sequence.signal Completed 的时候 Completed (这句话有点绕，需要结合 zipWith 的定义仔细体会一下)。</li>
+<li>根据倒计时的数值，计算按钮上需要显示的 title 信息和按钮的状态。</li>
+<li>前面 11 里面的 zipWith 操作，可以确保倒计时结束时，会触发 Completed，但是万一在倒计时的过程中，用户离开了当前页面，这个时候就需要通过 takeUntil 来触发 Completed。之所以在这里这么注重 Completed，是因为前面的 5 里面的 switchToLatest 操作，会 <code>sends completed when both the receiver and the last sent signal complete</code>。</li>
+<li>通过 setNameWithFormat 和 logCompleted 打印一些 log 信息，方便调试，注意观察一下 Signal 的 Completed。</li>
+</ol>
+<h3 id="内存管理，自动释放-Pipeline"><a href="#内存管理，自动释放-Pipeline" class="headerlink" title="内存管理，自动释放 Pipeline"></a>内存管理，自动释放 Pipeline</h3><p>从前面的 code 中可以看到，好几个地方都在强调要触发 Completed，这完全就是为了正确的进行内存管理，避免内存泄露，<a href="https://github.com/ReactiveCocoa/ReactiveCocoa/blob/7877f99bdfb4be1c82c4804082e99c35d0a93a91/Documentation/Legacy/DesignGuidelines.md#avoid-explicit-subscriptions-and-disposal" target="_blank" rel="external">避免手动的调用 disposal</a>。takeUntil:self.rac_willDeallocSignal 是一种常用的手段。</p>
+<p>还有一种典型的场景，也可以通过 takeUntil 操作来触发 Completed，代码如下：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">- (<span class="built_in">UICollectionViewCell</span> *)collectionView:(<span class="built_in">UICollectionView</span> *)collectionView cellForItemAtIndexPath:(<span class="built_in">NSIndexPath</span> *)indexPath &#123;</span><br><span class="line">    WWKPhoto *photo = <span class="keyword">self</span>.photos[indexPath.row];</span><br><span class="line">    XMCollectionImageViewCell *cell = [<span class="keyword">self</span>.imageCollectionView dequeueReusableCellWithReuseIdentifier:<span class="built_in">NSStringFromClass</span>([XMCollectionImageViewCell class]) forIndexPath:indexPath];</span><br><span class="line">    cell.imageView.image = photo.thumbnail;</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    @weakify(<span class="keyword">self</span>);</span><br><span class="line">    [[[cell.longPressSignal map:^<span class="keyword">id</span>(XMCollectionImageViewCell *viewCell) &#123;</span><br><span class="line">        @strongify(<span class="keyword">self</span>);</span><br><span class="line">        <span class="keyword">return</span> [<span class="keyword">self</span>.imageCollectionView indexPathForCell:viewCell];</span><br><span class="line">    &#125;]</span><br><span class="line">      takeUntil:[cell rac_prepareForReuseSignal]]</span><br><span class="line">     subscribeNext:^(<span class="built_in">NSIndexPath</span> *longPressIndexPath) &#123;</span><br><span class="line">         @strongify(<span class="keyword">self</span>);</span><br><span class="line">         <span class="built_in">UIAlertController</span> *alert= [<span class="built_in">UIAlertController</span></span><br><span class="line">                                    alertControllerWithTitle:<span class="string">@"确定删除此图片"</span></span><br><span class="line">                                    message:<span class="literal">nil</span></span><br><span class="line">                                    preferredStyle:<span class="built_in">UIAlertControllerStyleAlert</span>];</span><br><span class="line">         </span><br><span class="line">         <span class="built_in">UIAlertAction</span>* ok = [<span class="built_in">UIAlertAction</span> actionWithTitle:<span class="string">@"确定"</span> style:<span class="built_in">UIAlertActionStyleDefault</span></span><br><span class="line">                                                    handler:^(<span class="built_in">UIAlertAction</span> * action)&#123;</span><br><span class="line">                                                        @strongify(<span class="keyword">self</span>);</span><br><span class="line">                                                        [[<span class="keyword">self</span> mutableArrayValueForKey:@keypath(<span class="keyword">self</span>, photos)] removeObjectAtIndex:longPressIndexPath.row];</span><br><span class="line">                                                        [<span class="keyword">self</span>.imageCollectionView deleteItemsAtIndexPaths:@[longPressIndexPath]];</span><br><span class="line">                                                    &#125;];</span><br><span class="line">         <span class="built_in">UIAlertAction</span>* cancel = [<span class="built_in">UIAlertAction</span> actionWithTitle:<span class="string">@"取消"</span> style:<span class="built_in">UIAlertActionStyleDefault</span></span><br><span class="line">                                                        handler:^(<span class="built_in">UIAlertAction</span> * action) &#123;</span><br><span class="line">                                                            [alert dismissViewControllerAnimated:<span class="literal">YES</span> completion:<span class="literal">nil</span>];</span><br><span class="line">                                                        &#125;];</span><br><span class="line">         </span><br><span class="line">         [alert addAction:ok];</span><br><span class="line">         [alert addAction:cancel];</span><br><span class="line">         </span><br><span class="line">         [<span class="keyword">self</span>.containerViewController presentViewController:alert animated:<span class="literal">YES</span> completion:<span class="literal">nil</span>];</span><br><span class="line">     &#125; completed:^&#123;</span><br><span class="line">     &#125;];</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> cell;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这段代码也很简单，唯一需要特别注意的就是 takeUntil:[cell rac_prepareForReuseSignal] 这一句，因为 UICollectionViewCell 本身是有一套复用机制的，每个 cell 上的 Pipeline 的生命期和 cell 本身的生命期并不一致，所以不能依赖于 cell.rac_willDeallocSignal，而应该使用 [cell rac_prepareForReuseSignal] 这个更准确的 Signal。</p>
+<p>讨论到这里，还可以得到一个结论，在设计 Signal 的时候，要尽量的让这个 Signal 能够发送 Completed 事件，这样才能够充分的利用 Pipeline 的自动释放功能，保持代码的简洁。RAC 框架里，有一些很常用的 Signal，其实它们的内部实现也是用类似 takeUntil 的操作做了这种处理，比如下面这些 Signal：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">UIControl</span> (<span class="title">RACSignalSupport</span>)</span></span><br><span class="line">- (RACSignal *)rac_signalForControlEvents:(<span class="built_in">UIControlEvents</span>)controlEvents;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">UIGestureRecognizer</span> (<span class="title">RACSignalSupport</span>)</span></span><br><span class="line">- (RACSignal *)rac_gestureSignal;</span><br><span class="line"><span class="keyword">@end</span></span><br><span class="line"></span><br><span class="line">RACObserve 宏定义</span><br></pre></td></tr></table></figure></p>
+<p>下面这个 Signal，则是没有 Completed 事件的，要求它的使用者来决定什么时候释放对应的 Pipeline：<br><figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">@interface</span> <span class="title">NSNotificationCenter</span> (<span class="title">RACSupport</span>)</span></span><br><span class="line">- (RACSignal *)rac_addObserverForName:(<span class="built_in">NSString</span> *)notificationName object:(<span class="keyword">id</span>)object;</span><br><span class="line"><span class="keyword">@end</span></span><br></pre></td></tr></table></figure></p>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/FRP/" rel="tag">#FRP</a>
+          
+            <a href="/tags/ReactiveCocoa/" rel="tag">#ReactiveCocoa</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/10/CSP-Concurrency-Patterns-In-Swift/" rel="next" title="CSP Concurrency Patterns In Swift">
+                <i class="fa fa-chevron-left"></i> CSP Concurrency Patterns In Swift
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/04/26/The-Power-Of-Composition-In-FRP-Part-2/" rel="prev" title="用 ReactiveCocoa 事半功倍的写代码（二）">
+                用 ReactiveCocoa 事半功倍的写代码（二） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="QQ邮箱iOS开发组" />
+          <p class="site-author-name" itemprop="name">QQ邮箱iOS开发组</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-name">博客</span>
+            </a>
+          </div>
+          
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#处理键盘的弹出和隐藏"><span class="nav-number">2.</span> <span class="nav-text">处理键盘的弹出和隐藏</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Singal上的-next、complete、error"><span class="nav-number">3.</span> <span class="nav-text">Singal上的 next、complete、error</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#基础格式"><span class="nav-number">3.1.</span> <span class="nav-text">基础格式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#关键字解释"><span class="nav-number">3.2.</span> <span class="nav-text">关键字解释</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#所有可能出现的有意义的非嵌套-Signal"><span class="nav-number">3.3.</span> <span class="nav-text">所有可能出现的有意义的非嵌套 Signal</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#发送验证码的倒计时按钮"><span class="nav-number">4.</span> <span class="nav-text">发送验证码的倒计时按钮</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内存管理，自动释放-Pipeline"><span class="nav-number">5.</span> <span class="nav-text">内存管理，自动释放 Pipeline</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">QQ邮箱iOS开发组</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  
+
+
+  
+
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.scheme !== 'Pisces' && (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always')) {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'iosqqmail';
+      var disqus_identifier = '2016/04/17/The-Power-Of-Composition-In-FRP-Part-1/';
+      var disqus_title = '用 ReactiveCocoa 事半功倍的写代码（一）';
+      var disqus_url = 'http://iosqqmail.github.io/2016/04/17/The-Power-Of-Composition-In-FRP-Part-1/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+  
+  
+
+  
+  
+
+
+</body>
+</html>

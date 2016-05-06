@@ -1,0 +1,731 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  <link href="/vendors/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css"/>
+
+
+
+
+  <link href="//fonts.googleapis.com/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+
+
+
+<link href="/vendors/font-awesome/css/font-awesome.min.css?v=4.4.0" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=0.5.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="FRP,ReactiveCocoa," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=0.5.0" />
+
+
+
+
+
+
+<meta name="description" content="利用 map 组装顺序执行的业务这其实应该是最常见的使用场景，有一类业务，是可以抽象成一组按顺序执行的串行任务的，比如下面这段代码
+12345678910111213141516171819/* ColdSignal&amp;lt;NSString, NSError&amp;gt; Completion: decode success; Error: FMBarCodeServiceErrorDomain ||">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 ReactiveCocoa 事半功倍的写代码（二）">
+<meta property="og:url" content="http://iosqqmail.github.io/2016/04/26/The-Power-Of-Composition-In-FRP-Part-2/index.html">
+<meta property="og:site_name" content="QQ邮箱的技术博客">
+<meta property="og:description" content="利用 map 组装顺序执行的业务这其实应该是最常见的使用场景，有一类业务，是可以抽象成一组按顺序执行的串行任务的，比如下面这段代码
+12345678910111213141516171819/* ColdSignal&amp;lt;NSString, NSError&amp;gt; Completion: decode success; Error: FMBarCodeServiceErrorDomain ||">
+<meta property="og:updated_time" content="2016-05-06T04:56:52.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="用 ReactiveCocoa 事半功倍的写代码（二）">
+<meta name="twitter:description" content="利用 map 组装顺序执行的业务这其实应该是最常见的使用场景，有一类业务，是可以抽象成一组按顺序执行的串行任务的，比如下面这段代码
+12345678910111213141516171819/* ColdSignal&amp;lt;NSString, NSError&amp;gt; Completion: decode success; Error: FMBarCodeServiceErrorDomain ||">
+
+
+
+<script type="text/javascript" id="hexo.configuration">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"hide"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: 0,
+      author: '博主'
+    }
+  };
+</script>
+
+  <title> 用 ReactiveCocoa 事半功倍的写代码（二） | QQ邮箱的技术博客 </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-74497486-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">QQ邮箱的技术博客</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+  <p class="site-subtitle"></p>
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu ">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-home fa-fw"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-archive fa-fw"></i> <br />
+            
+            博文
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404.html" rel="section">
+            
+              <i class="menu-item-icon fa fa-heartbeat fa-fw"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+      
+      
+    </ul>
+  
+
+  
+</nav>
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                用 ReactiveCocoa 事半功倍的写代码（二）
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            <span class="post-meta-item-icon">
+              <i class="fa fa-calendar-o"></i>
+            </span>
+            <span class="post-meta-item-text">jasonjfeng(冯牮) 发表于</span>
+            <time itemprop="dateCreated" datetime="2016-04-26T10:38:03+08:00" content="2016-04-26">
+              2016-04-26
+            </time>
+          </span>
+
+          
+
+          
+            
+              <span class="post-comments-count">
+                &nbsp; | &nbsp;
+                <a href="/2016/04/26/The-Power-Of-Composition-In-FRP-Part-2/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2016/04/26/The-Power-Of-Composition-In-FRP-Part-2/" itemprop="commentsCount"></span>
+                </a>
+              </span>
+            
+          
+
+          
+
+          
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="利用-map-组装顺序执行的业务"><a href="#利用-map-组装顺序执行的业务" class="headerlink" title="利用 map 组装顺序执行的业务"></a>利用 map 组装顺序执行的业务</h3><p>这其实应该是最常见的使用场景，有一类业务，是可以抽象成一组按顺序执行的串行任务的，比如下面这段代码</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span><br><span class="line"> ColdSignal&lt;NSString, NSError&gt;</span><br><span class="line"> Completion: decode success;</span><br><span class="line"> Error: FMBarCodeServiceErrorDomain || NSURLErrorDomain || RACSignalErrorDomain with RACSignalErrorTimedOut  //4</span><br><span class="line"> Scheduler: specified;</span><br><span class="line"> Multicast: NO;</span><br><span class="line"> */</span></span><br><span class="line">- (RACSignal *)decodeBarWithURLString: (<span class="built_in">NSString</span> *)urlString &#123;</span><br><span class="line">    <span class="built_in">NSParameterAssert</span>(urlString != <span class="literal">nil</span>);</span><br><span class="line">    </span><br><span class="line">    @weakify(<span class="keyword">self</span>);</span><br><span class="line">    <span class="keyword">return</span> [[[<span class="keyword">self</span> get<span class="built_in">UIImageWithURLString</span>:urlString]  <span class="comment">//1</span></span><br><span class="line">             flattenMap:^(<span class="built_in">UIImage</span> *image) &#123;</span><br><span class="line">                 @strongify(<span class="keyword">self</span>);</span><br><span class="line">                 <span class="keyword">return</span> [<span class="keyword">self</span> decodeBarWith<span class="built_in">UIImage</span>:image];  <span class="comment">//2</span></span><br><span class="line">             &#125;]</span><br><span class="line">            timeout:<span class="number">1.5</span> onScheduler:[RACScheduler schedulerWithPriority:RACSchedulerPriorityDefault]];  <span class="comment">//3</span></span><br><span class="line">    </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<p>这段代码做的事情并不复杂，就是传入一个图片的 url 地址，然后下载对应的图片，然后尝试对这张图片进行二维码解码：</p>
+<ol>
+<li>getUIImageWithURLString 里面完成的小任务，就是下载 UIImage。当下载失败的时候，会发出一个 NSURLErrorDomain 的 NSError。</li>
+<li>这里的小任务，就是对前一步得到的 UIImage 进行二维码解码。当解码失败的时候，会发出一个 FMBarCodeServiceErrorDomain 的 NSError(自己的业务代码中定义的 error domain)。</li>
+<li>这里的业务需求，是当用户长按一张图片的时候，弹出一个选项菜单，让用户可以选择合适的操作，比如『保存图片』，『转发图片』等等，同时，如果这张图片中能够识别出二维码，在弹出的选项菜单中，还要包含一项『识别图中二维码』。二维码解析是需要消耗一定的时间的，下载图片也是需要时间的，有些情况下，即便图片本身的确是一个二维码，但是二维码可能很复杂，解析的时间就会比较长，为了保证最佳的用户体验，这里需要做一个超时逻辑，如果 1.5 秒内都还没有解析出一个有效的二维码，则放弃当前的解析动作。<a href="http://reactivex.io/documentation/operators/timeout.html" target="_blank" rel="external">timeout</a> 操作就是针对这种场景的，当到达设定的超时时间时，如果还没有发送 Next 事件，则会在 Pipeline 中发送一个 RACSignalErrorDomain 的 NSError，error code 是 RACSignalErrorTimedOut。</li>
+<li>这个 Pipeline 是由好几个小任务组合出来的，每一个环节都有可能发送 error，所以对于这个 Pipeline 的订阅者，捕获到的 NSError 会是好几个不同 Domain 的其中之一。</li>
+</ol>
+<p>这个 Pipeline 的订阅者的代码会是下面这种样子：</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">-(<span class="keyword">void</span>)jsCallImageClick:(<span class="built_in">NSString</span> *)imageUrl imageClickName:(<span class="built_in">NSString</span> *)imgClickName &#123;</span><br><span class="line">    <span class="built_in">NSMutableArray</span> *components = [<span class="built_in">NSMutableArray</span> arrayWithArray:[imageUrl componentsSeparatedByString:<span class="string">@"&amp;qmSrc:"</span>]];</span><br><span class="line">    <span class="built_in">NSMutableArray</span> *temp = [<span class="built_in">NSMutableArray</span> arrayWithArray:[(<span class="built_in">NSString</span>*)[components firstObject] componentsSeparatedByString:[<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"&amp;%@:"</span>,imgClickName]]];</span><br><span class="line">    [<span class="keyword">self</span> filterJsArray:temp];</span><br><span class="line">    <span class="built_in">NSString</span> *imageUrlString = [<span class="built_in">NSString</span> stringWithFormat:<span class="string">@"%@"</span>,(<span class="built_in">NSString</span> *)[temp firstObject]];</span><br><span class="line">    </span><br><span class="line">    RACSignal *barCodeStringSignal = [<span class="keyword">self</span>.barCodeService decodeBarWithURLString:imageUrlString];</span><br><span class="line">    </span><br><span class="line">    @weakify(<span class="keyword">self</span>);</span><br><span class="line">    [[barCodeStringSignal</span><br><span class="line">      deliverOn:[RACScheduler mainThreadScheduler]]  <span class="comment">//1</span></span><br><span class="line">     subscribeNext:^(<span class="built_in">NSString</span> *barCodeString) &#123;</span><br><span class="line">         @strongify(<span class="keyword">self</span>);</span><br><span class="line">         [<span class="keyword">self</span> showImageSaveSheetWithImageUrl:imageUrl withImageClickName:imgClickName withBarCode:barCodeString];</span><br><span class="line">     &#125; error:^(<span class="built_in">NSError</span> *error) &#123;</span><br><span class="line">         </span><br><span class="line">         @strongify(<span class="keyword">self</span>);</span><br><span class="line">         [<span class="keyword">self</span> showImageSaveSheetWithImageUrl:imageUrl withImageClickName:imgClickName withBarCode:<span class="literal">nil</span>];</span><br><span class="line">     &#125; completed:^&#123;</span><br><span class="line">     &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>因为 decodeBarWithURLString 的内部在使用 timeout 的时候，已经通过 RACScheduler 切换到了后台线程，所以在订阅者(UI)这里还要切换回 [RACScheduler mainThreadScheduler]。</p>
+<h3 id="捕获并且替换-error"><a href="#捕获并且替换-error" class="headerlink" title="捕获并且替换 error"></a>捕获并且替换 error</h3><p>下面也是一个真实业务场景中的代码片段，有适当的删减，需求大致可以描述为：FMContact.contactItems 数组里包含的是一个联系人的所有的 email 地址(至少有一个)，在用 FMContactCreateAvatarCell 显示这个联系人的头像的时候，要通过其中的一个 email 地址，构造出一个 url 地址，然后下载对应的头像，最后把头像 image 设置到 UIButton 上。</p>
+<figure class="highlight objectivec"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//1</span></span><br><span class="line"><span class="comment">/*</span><br><span class="line"> ColdSignal&lt;UIImage?, NoError&gt;</span><br><span class="line"> Completion: download image finished;</span><br><span class="line"> Error: </span><br><span class="line"> Scheduler: specified;</span><br><span class="line"> Multicast: NO;</span><br><span class="line"> */</span></span><br><span class="line">- (RACSignal *)getAvatarWithContact: (FMContact *)contact &#123;</span><br><span class="line">    RACSignal *addrs = [[contact.contactItems.rac_sequence</span><br><span class="line">                         map:^(FMContactItem *contactItem) &#123;</span><br><span class="line">                             <span class="keyword">return</span> contactItem.email;</span><br><span class="line">                         &#125;]</span><br><span class="line">                        signal];<span class="comment">//4</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> [[[[addrs take:<span class="number">1</span>]  <span class="comment">//5</span></span><br><span class="line">              map:^<span class="keyword">id</span>(<span class="built_in">NSString</span> *emailAddr) &#123;</span><br><span class="line">                  <span class="keyword">return</span> [[[FMAvatarManager shareInstance] rac_asyncGetAvatar:emailAddr]</span><br><span class="line">                          retry:<span class="number">3</span>];  <span class="comment">//6</span></span><br><span class="line">              &#125;]</span><br><span class="line">             flatten]</span><br><span class="line">            catch:^RACSignal *(<span class="built_in">NSError</span> *error) &#123;</span><br><span class="line">                <span class="comment">//7</span></span><br><span class="line">                <span class="keyword">return</span> [RACSignal <span class="keyword">return</span>:<span class="literal">nil</span>]; <span class="comment">//8</span></span><br><span class="line">            &#125;];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">- (<span class="keyword">void</span>)initPipelineWithCell:(FMContactCreateAvatarCell *)cell &#123;</span><br><span class="line">    @weakify(cell);</span><br><span class="line">    [[[[<span class="keyword">self</span> getAvatarWithContact:<span class="keyword">self</span>.contact] <span class="comment">//1</span></span><br><span class="line">       deliverOnMainThread]</span><br><span class="line">      takeUntil:cell.rac_prepareForReuseSignal]</span><br><span class="line">     subscribeNext:^(<span class="built_in">UIImage</span> *image) &#123;</span><br><span class="line">         @strongify(cell);</span><br><span class="line">         <span class="keyword">if</span> (image) &#123; <span class="comment">//2</span></span><br><span class="line">             [cell.avatarButton setImage:image forState:<span class="built_in">UIControlStateNormal</span>];</span><br><span class="line">         &#125;</span><br><span class="line">     &#125; error:^(<span class="built_in">NSError</span> *error) &#123;</span><br><span class="line">         <span class="comment">//3</span></span><br><span class="line">     &#125; completed:^&#123;</span><br><span class="line">     &#125;];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个业务需求看上去也没有太大的难度，大家肯定都可以用传统的代码写出来，但是如果用 FRP，则可以用声明式(declarative)的代码把逻辑写的更清晰：</p>
+<ol>
+<li>getAvatarWithContact 定义了一个 Signal，通过输入参数 FMContact，获取一个对应的头像，如果头像下载成功，则通过 next 把 image 发送给 Pipeline 的订阅者，如果下载图片失败，并不会发送 error，而是在 next 里面发送一个 nil。</li>
+<li>这个 Pipeline 只会有一次 next 事件，按照 Signal 的定义，可能为 nil，所以需要检查。</li>
+<li>这个 Pipeline 是不会产生 error 的，所以这里不需要做任何事情。但是真正的下载图片的操作，也就是 [[FMAvatarManager shareInstance] rac_asyncGetAvatar:emailAddr] 这一句代码产生的 signal，是有 error 事件的，有意思的地方就是如何对这里可能出现的 error 进行处理，请接着往下看。</li>
+<li>把 FMContact.contactItems 数组里面的 email 地址，用 signal 的形式发送出来。</li>
+<li>FMContact 至少有一个 email 地址，因为只需要显示一个头像，所以直接用最简单的办法，通过 <a href="http://rxmarbles.com/#take" target="_blank" rel="external">take</a> 操作取出其中的第一个 email 地址。</li>
+<li>从模块设计的角度来看，应该遵循一个基本原则，如果一个小任务可能出现失败的情况，就应该通过 error 把错误信息发送出去。[[FMAvatarManager shareInstance] rac_asyncGetAvatar:emailAddr] 是在下载头像图片，肯定是存在下载失败的可能性，所以这个小任务应该遵循这个基本原则。但是，为了更好的用户体验，可以在 Pipeline 中增加一个环节，添加一个策略，就是遇到下载失败的时候，自动重新下载一遍，总共尝试 3 次，这个需求可以用 <a href="http://reactivex.io/documentation/operators/retry.html" target="_blank" rel="external">retry</a> 操作方便的实现出来。</li>
+<li>如果运气真的不好，3 次下载都失败了，那 Pipeline 里还是会发送 error 的，但是 getAvatarWithContact 这个 signal 的设计要求是不要 error，这个时候就该用到 <a href="http://reactivex.io/documentation/operators/catch.html" target="_blank" rel="external">catch</a> 操作了。catch 做的事情，就是当 Pipeline 里出现 error 的时候，把这个 error 『吃掉』，然后用另外的一个 signal 来替换原来的 signal，让整个 Pipeline 可以继续发送 next 数据。</li>
+<li>[RACSignal return:nil] 就是用来替换的 signal，这个 signal 会在 next 里面发送一次 nil，然后立刻就 complete。(如果业务需求变化，这里也可以通过 [RACSignal return:defaultAvatarImage] 发送一个默认的头像图片，Pipeline 是很方便的，可以灵活的组装)。</li>
+</ol>
+
+      
+    </div>
+
+    <div>
+      
+        
+      
+    </div>
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/FRP/" rel="tag">#FRP</a>
+          
+            <a href="/tags/ReactiveCocoa/" rel="tag">#ReactiveCocoa</a>
+          
+        </div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2016/04/17/The-Power-Of-Composition-In-FRP-Part-1/" rel="next" title="用 ReactiveCocoa 事半功倍的写代码（一）">
+                <i class="fa fa-chevron-left"></i> 用 ReactiveCocoa 事半功倍的写代码（一）
+              </a>
+            
+          </div>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2016/04/28/The-Power-Of-Composition-In-FRP-Part-3/" rel="prev" title="用 ReactiveCocoa 事半功倍的写代码（三）">
+                用 ReactiveCocoa 事半功倍的写代码（三） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+      <div id="disqus_thread">
+        <noscript>
+          Please enable JavaScript to view the
+          <a href="//disqus.com/?ref_noscript">comments powered by Disqus.</a>
+        </noscript>
+      </div>
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel ">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/avatar.png"
+               alt="QQ邮箱iOS开发组" />
+          <p class="site-author-name" itemprop="name">QQ邮箱iOS开发组</p>
+          <p class="site-description motion-element" itemprop="description"></p>
+        </div>
+        <nav class="site-state motion-element">
+          <div class="site-state-item site-state-posts">
+            <a href="/archives">
+              <span class="site-state-item-count">8</span>
+              <span class="site-state-item-name">博客</span>
+            </a>
+          </div>
+          
+          
+
+          
+            <div class="site-state-item site-state-tags">
+              
+                <span class="site-state-item-count">19</span>
+                <span class="site-state-item-name">标签</span>
+              
+            </div>
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+      </section>
+
+      
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc-indicator-top post-toc-indicator">
+            <i class="fa fa-angle-double-up"></i>
+          </div>
+          <div class="post-toc">
+            
+              
+            
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#利用-map-组装顺序执行的业务"><span class="nav-number">1.</span> <span class="nav-text">利用 map 组装顺序执行的业务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#捕获并且替换-error"><span class="nav-number">2.</span> <span class="nav-text">捕获并且替换 error</span></a></li></ol></div>
+            
+          </div>
+          <div class="post-toc-indicator-bottom post-toc-indicator">
+            <i class="fa fa-angle-double-down"></i>
+          </div>
+        </section>
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2016</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">QQ邮箱iOS开发组</span>
+</div>
+
+<div class="powered-by">
+  由 <a class="theme-link" href="http://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+
+      </div>
+    </footer>
+
+    <div class="back-to-top"></div>
+  </div>
+
+  
+
+
+  
+
+
+
+  <script type="text/javascript" src="/vendors/jquery/index.js?v=2.1.3"></script>
+
+  <script type="text/javascript" src="/vendors/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  <script type="text/javascript" src="/vendors/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/velocity/velocity.ui.min.js"></script>
+
+  <script type="text/javascript" src="/vendors/fancybox/source/jquery.fancybox.pack.js"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=0.5.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=0.5.0"></script>
+
+
+
+  
+  
+
+  
+  
+<script type="text/javascript" src="/js/src/scrollspy.js?v=0.5.0"></script>
+
+<script type="text/javascript" id="sidebar.toc.highlight">
+  $(document).ready(function () {
+    var tocSelector = '.post-toc';
+    var $tocSelector = $(tocSelector);
+    var activeCurrentSelector = '.active-current';
+
+    $tocSelector
+      .on('activate.bs.scrollspy', function () {
+        var $currentActiveElement = $(tocSelector + ' .active').last();
+
+        removeCurrentActiveClass();
+        $currentActiveElement.addClass('active-current');
+
+        $tocSelector[0].scrollTop = $currentActiveElement.position().top;
+      })
+      .on('clear.bs.scrollspy', function () {
+        removeCurrentActiveClass();
+      });
+
+    function removeCurrentActiveClass () {
+      $(tocSelector + ' ' + activeCurrentSelector)
+        .removeClass(activeCurrentSelector.substring(1));
+    }
+
+    function processTOC () {
+      getTOCMaxHeight();
+      toggleTOCOverflowIndicators();
+    }
+
+    function getTOCMaxHeight () {
+      var height = $('.sidebar').height() -
+                   $tocSelector.position().top -
+                   $('.post-toc-indicator-bottom').height();
+
+      $tocSelector.css('height', height);
+
+      return height;
+    }
+
+    function toggleTOCOverflowIndicators () {
+      tocOverflowIndicator(
+        '.post-toc-indicator-top',
+        $tocSelector.scrollTop() > 0 ? 'show' : 'hide'
+      );
+
+      tocOverflowIndicator(
+        '.post-toc-indicator-bottom',
+        $tocSelector.scrollTop() >= $tocSelector.find('ol').height() - $tocSelector.height() ? 'hide' : 'show'
+      )
+    }
+
+    $(document).on('sidebar.motion.complete', function () {
+      processTOC();
+    });
+
+    $('body').scrollspy({ target: tocSelector });
+    $(window).on('resize', function () {
+      if ( $('.sidebar').hasClass('sidebar-active') ) {
+        processTOC();
+      }
+    });
+
+    onScroll($tocSelector);
+
+    function onScroll (element) {
+      element.on('mousewheel DOMMouseScroll', function (event) {
+          var oe = event.originalEvent;
+          var delta = oe.wheelDelta || -oe.detail;
+
+          this.scrollTop += ( delta < 0 ? 1 : -1 ) * 30;
+          event.preventDefault();
+
+          toggleTOCOverflowIndicators();
+      });
+    }
+
+    function tocOverflowIndicator (indicator, action) {
+      var $indicator = $(indicator);
+      var opacity = action === 'show' ? 1 : 0;
+      $indicator.velocity ?
+        $indicator.velocity('stop').velocity({
+          opacity: opacity
+        }, { duration: 100 }) :
+        $indicator.stop().animate({
+          opacity: opacity
+        }, 100);
+    }
+
+  });
+</script>
+
+<script type="text/javascript" id="sidebar.nav">
+  $(document).ready(function () {
+    var html = $('html');
+    var TAB_ANIMATE_DURATION = 200;
+    var hasVelocity = $.isFunction(html.velocity);
+
+    $('.sidebar-nav li').on('click', function () {
+      var item = $(this);
+      var activeTabClassName = 'sidebar-nav-active';
+      var activePanelClassName = 'sidebar-panel-active';
+      if (item.hasClass(activeTabClassName)) {
+        return;
+      }
+
+      var currentTarget = $('.' + activePanelClassName);
+      var target = $('.' + item.data('target'));
+
+      hasVelocity ?
+        currentTarget.velocity('transition.slideUpOut', TAB_ANIMATE_DURATION, function () {
+          target
+            .velocity('stop')
+            .velocity('transition.slideDownIn', TAB_ANIMATE_DURATION)
+            .addClass(activePanelClassName);
+        }) :
+        currentTarget.animate({ opacity: 0 }, TAB_ANIMATE_DURATION, function () {
+          currentTarget.hide();
+          target
+            .stop()
+            .css({'opacity': 0, 'display': 'block'})
+            .animate({ opacity: 1 }, TAB_ANIMATE_DURATION, function () {
+              currentTarget.removeClass(activePanelClassName);
+              target.addClass(activePanelClassName);
+            });
+        });
+
+      item.siblings().removeClass(activeTabClassName);
+      item.addClass(activeTabClassName);
+    });
+
+    $('.post-toc a').on('click', function (e) {
+      e.preventDefault();
+      var targetSelector = NexT.utils.escapeSelector(this.getAttribute('href'));
+      var offset = $(targetSelector).offset().top;
+      hasVelocity ?
+        html.velocity('stop').velocity('scroll', {
+          offset: offset  + 'px',
+          mobileHA: false
+        }) :
+        $('html, body').stop().animate({
+          scrollTop: offset
+        }, 500);
+    });
+
+    // Expand sidebar on post detail page by default, when post has a toc.
+    NexT.motion.middleWares.sidebar = function () {
+      var $tocContent = $('.post-toc-content');
+
+      if (CONFIG.scheme !== 'Pisces' && (CONFIG.sidebar.display === 'post' || CONFIG.sidebar.display === 'always')) {
+        if ($tocContent.length > 0 && $tocContent.html().trim().length > 0) {
+          NexT.utils.displaySidebar();
+        }
+      }
+    };
+  });
+</script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=0.5.0"></script>
+
+
+
+  
+
+
+
+  
+
+    <script type="text/javascript">
+      var disqus_shortname = 'iosqqmail';
+      var disqus_identifier = '2016/04/26/The-Power-Of-Composition-In-FRP-Part-2/';
+      var disqus_title = '用 ReactiveCocoa 事半功倍的写代码（二）';
+      var disqus_url = 'http://iosqqmail.github.io/2016/04/26/The-Power-Of-Composition-In-FRP-Part-2/';
+
+      function run_disqus_script(disqus_script){
+        var dsq = document.createElement('script');
+        dsq.type = 'text/javascript';
+        dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+      }
+
+      run_disqus_script('count.js');
+      
+        run_disqus_script('embed.js');
+      
+    </script>
+  
+
+
+
+  
+  
+
+  
+  
+
+
+</body>
+</html>
